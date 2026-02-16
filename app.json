@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "RISE",
+    "slug": "rise-alarm",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#030718"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "bio.pdufa.rise"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#030718"
+      },
+      "package": "bio.pdufa.rise"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-sensors",
+      "expo-notifications"
+    ]
+  }
+}

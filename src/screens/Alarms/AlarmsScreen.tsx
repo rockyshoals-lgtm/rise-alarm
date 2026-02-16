@@ -1,0 +1,369 @@
+import React, { useState, useCallback } from 'react';
+import {
+  View, Text, TouchableOpacity, FlatList, StyleSheet, Switch, Modal,
+  ScrollView, Platform
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { COLORS } from '../../theme';
+import {
+  useAlarmStore, formatTime, DAY_LABELS, createDefaultAlarm,
+  type Alarm, type ChallengeType, type Difficulty
+} from '../../stores/alarmStore';
+import { usePlayerStore } from '../../stores/playerStore';
+import XPBar from '../../components/Common/XPBar';
+import BossWidget from '../../components/Common/BossWidget';
+
+const CHALLENGE_OPTIONS: { type: ChallengeType; label: string; emoji: string }[] = [
+  { type: 'math', label: 'Rune Math', emoji: '⚡' },
+  { type: 'trivia', label: 'Wisdom Test', emoji: '📚' },
+  { type: 'shake', label: 'Shake Fury', emoji: '📳' },
+  { type: 'memory', label: 'Memory Runes', emoji: '🧠' },
+];
+
+const DIFFICULTY_OPTIONS: Difficulty[] = ['easy', 'medium', 'hard', 'viking'];
+
+export default function AlarmsScreen() {
+  const { alarms, addAlarm, updateAlarm, deleteAlarm, toggleAlarm, setActiveAlarm } = useAlarmStore();
+  const { currentStreak, coins } = usePlayerStore();
+  const [editModal, setEditModal] = useState(false);
+  const [editAlarm, setEditAlarm] = useState<Alarm | null>(null);
+  const [hour, setHour] = useState(7);
+  const [minute, setMinute] = useState(0);
+  const [label, setLabel] = useState('');
+  const [days, setDays] = useState([false, true, true, true, true, true, false]);
+  const [challenges, setChallenges] = useState<ChallengeType[]>(['math', 'trivia']);
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [challengeCount, setChallengeCount] = useState(2);
+  const [snoozeLimit, setSnoozeLimit] = useState(2);
+
+  const openNewAlarm = () => {
+    setEditAlarm(null);
+    setHour(7);
+    setMinute(0);
+    setLabel('');
+    setDays([false, true, true, true, true, true, false]);
+    setChallenges(['math', 'trivia']);
+    setDifficulty('medium');
+    setChallengeCount(2);
+    setSnoozeLimit(2);
+    setEditModal(true);
+  };
+
+  const openEditAlarm = (alarm: Alarm) => {
+    setEditAlarm(alarm);
+    setHour(alarm.hour);
+    setMinute(alarm.minute);
+    setLabel(alarm.label);
+    setDays([...alarm.days]);
+    setChallenges([...alarm.challenges]);
+    setDifficulty(alarm.difficulty);
+    setChallengeCount(alarm.challengeCount);
+    setSnoozeLimit(alarm.snoozeLimit);
+    setEditModal(true);
+  };
+
+  const saveAlarm = () => {
+    const data = {
+      hour, minute, label, enabled: true, days,
+      challenges, challengeCount, difficulty, snoozeLimit,
+      vibrate: true, sound: 'viking_horn',
+    };
+    if (editAlarm) {
+      updateAlarm(editAlarm.id, data);
+    } else {
+      addAlarm(data);
+    }
+    setEditModal(false);
+  };
+
+  const toggleDay = (i: number) => {
+    const newDays = [...days];
+    newDays[i] = !newDays[i];
+    setDays(newDays);
+  };
+
+  const toggleChallenge = (type: ChallengeType) => {
+    if (challenges.includes(type)) {
+      if (challenges.length > 1) setChallenges(challenges.filter((c) => c !== type));
+    } else {
+      setChallenges([...challenges, type]);
+    }
+  };
+
+  const testAlarm = (alarm: Alarm) => {
+    setActiveAlarm(alarm.id);
+  };
+
+  const renderAlarm = ({ item }: { item: Alarm }) => {
+    const activeDays = item.days.map((d, i) => d ? DAY_LABELS[i] : null).filter(Boolean).join(' ');
+    return (
+      <TouchableOpacity style={s.alarmCard} onPress={() => openEditAlarm(item)} activeOpacity={0.7}>
+        <View style={s.alarmLeft}>
+          <Text style={[s.time, !item.enabled && { opacity: 0.4 }]}>{formatTime(item.hour, item.minute)}</Text>
+          <Text style={s.alarmLabel}>{item.label || activeDays || 'One-time'}</Text>
+          <View style={s.challengeTags}>
+            {item.challenges.map((c) => {
+              const opt = CHALLENGE_OPTIONS.find((o) => o.type === c);
+              return (
+                <Text key={c} style={s.tag}>{opt?.emoji} {opt?.label}</Text>
+              );
+            })}
+          </View>
+        </View>
+        <View style={s.alarmRight}>
+          <Switch
+            value={item.enabled}
+            onValueChange={() => toggleAlarm(item.id)}
+            trackColor={{ false: COLORS.bgCardLight, true: COLORS.gold + '50' }}
+            thumbColor={item.enabled ? COLORS.gold : COLORS.textMuted}
+          />
+          <TouchableOpacity style={s.testBtn} onPress={() => testAlarm(item)}>
+            <Text style={s.testText}>TEST</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <SafeAreaView style={s.safe}>
+      <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent}>
+        {/* Header */}
+        <View style={s.headerRow}>
+          <View>
+            <Text style={s.appName}>RISE</Text>
+            <Text style={s.subtitle}>Conquer Your Morning</Text>
+          </View>
+          <View style={s.statsRow}>
+            <Text style={s.statItem}>🔥 {currentStreak}</Text>
+            <Text style={s.statItem}>💰 {coins}</Text>
+          </View>
+        </View>
+
+        <XPBar />
+
+        {/* Boss Widget */}
+        <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
+          <BossWidget />
+        </View>
+
+        {/* Alarms */}
+        <View style={s.sectionHeader}>
+          <Text style={s.sectionTitle}>⏰ ALARMS</Text>
+          <TouchableOpacity style={s.addBtn} onPress={openNewAlarm}>
+            <Text style={s.addText}>+ NEW</Text>
+          </TouchableOpacity>
+        </View>
+
+        {alarms.length === 0 ? (
+          <View style={s.empty}>
+            <Text style={s.emptyEmoji}>⏰</Text>
+            <Text style={s.emptyText}>No alarms yet</Text>
+            <Text style={s.emptySubtext}>Tap + NEW to create your first alarm</Text>
+          </View>
+        ) : (
+          alarms.map((alarm) => (
+            <View key={alarm.id} style={{ paddingHorizontal: 16, marginBottom: 10 }}>
+              {renderAlarm({ item: alarm })}
+            </View>
+          ))
+        )}
+      </ScrollView>
+
+      {/* Edit/Create Modal */}
+      <Modal visible={editModal} animationType="slide" transparent>
+        <View style={s.modalOverlay}>
+          <View style={s.modalContent}>
+            <ScrollView>
+              <Text style={s.modalTitle}>{editAlarm ? 'Edit Alarm' : 'New Alarm'}</Text>
+
+              {/* Time Picker */}
+              <View style={s.timePickerRow}>
+                <TouchableOpacity onPress={() => setHour((h) => (h + 1) % 24)} style={s.timeBtn}>
+                  <Text style={s.timeBtnText}>▲</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setMinute((m) => (m + 5) % 60)} style={s.timeBtn}>
+                  <Text style={s.timeBtnText}>▲</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={s.bigTime}>{formatTime(hour, minute)}</Text>
+              <View style={s.timePickerRow}>
+                <TouchableOpacity onPress={() => setHour((h) => (h - 1 + 24) % 24)} style={s.timeBtn}>
+                  <Text style={s.timeBtnText}>▼</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setMinute((m) => (m - 5 + 60) % 60)} style={s.timeBtn}>
+                  <Text style={s.timeBtnText}>▼</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Days */}
+              <Text style={s.fieldLabel}>Repeat Days</Text>
+              <View style={s.daysRow}>
+                {DAY_LABELS.map((d, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={[s.dayBtn, days[i] && s.dayBtnActive]}
+                    onPress={() => toggleDay(i)}
+                  >
+                    <Text style={[s.dayText, days[i] && s.dayTextActive]}>{d}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Challenges */}
+              <Text style={s.fieldLabel}>Dismiss Challenges</Text>
+              <View style={s.challengeRow}>
+                {CHALLENGE_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.type}
+                    style={[s.challengeBtn, challenges.includes(opt.type) && s.challengeBtnActive]}
+                    onPress={() => toggleChallenge(opt.type)}
+                  >
+                    <Text style={s.challengeEmoji}>{opt.emoji}</Text>
+                    <Text style={[s.challengeLabel, challenges.includes(opt.type) && { color: COLORS.text }]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Difficulty */}
+              <Text style={s.fieldLabel}>Difficulty</Text>
+              <View style={s.daysRow}>
+                {DIFFICULTY_OPTIONS.map((d) => (
+                  <TouchableOpacity
+                    key={d}
+                    style={[s.diffBtn, difficulty === d && s.diffBtnActive]}
+                    onPress={() => setDifficulty(d)}
+                  >
+                    <Text style={[s.diffText, difficulty === d && { color: COLORS.bg }]}>
+                      {d.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Challenge Count */}
+              <Text style={s.fieldLabel}>Challenges to Solve: {challengeCount}</Text>
+              <View style={s.daysRow}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <TouchableOpacity
+                    key={n}
+                    style={[s.dayBtn, challengeCount === n && s.dayBtnActive]}
+                    onPress={() => setChallengeCount(n)}
+                  >
+                    <Text style={[s.dayText, challengeCount === n && s.dayTextActive]}>{n}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Snooze Limit */}
+              <Text style={s.fieldLabel}>Snooze Limit: {snoozeLimit === 0 ? 'None' : snoozeLimit}</Text>
+              <View style={s.daysRow}>
+                {[0, 1, 2, 3].map((n) => (
+                  <TouchableOpacity
+                    key={n}
+                    style={[s.dayBtn, snoozeLimit === n && s.dayBtnActive]}
+                    onPress={() => setSnoozeLimit(n)}
+                  >
+                    <Text style={[s.dayText, snoozeLimit === n && s.dayTextActive]}>
+                      {n === 0 ? '🚫' : n}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Actions */}
+              <View style={s.modalActions}>
+                {editAlarm && (
+                  <TouchableOpacity
+                    style={s.deleteBtn}
+                    onPress={() => { deleteAlarm(editAlarm.id); setEditModal(false); }}
+                  >
+                    <Text style={s.deleteBtnText}>Delete</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity style={s.cancelBtn} onPress={() => setEditModal(false)}>
+                  <Text style={s.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.saveBtn} onPress={saveAlarm}>
+                  <Text style={s.saveText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: COLORS.bg },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 100 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
+  appName: { color: COLORS.gold, fontSize: 28, fontWeight: '800', letterSpacing: 3 },
+  subtitle: { color: COLORS.textSecondary, fontSize: 11, letterSpacing: 1, marginTop: 2 },
+  statsRow: { flexDirection: 'row', gap: 12 },
+  statItem: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 12 },
+  sectionTitle: { color: COLORS.text, fontSize: 14, fontWeight: '700', letterSpacing: 2 },
+  addBtn: { backgroundColor: COLORS.gold, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8 },
+  addText: { color: COLORS.bg, fontSize: 12, fontWeight: '700' },
+  // Alarm card
+  alarmCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  alarmLeft: { flex: 1 },
+  alarmRight: { alignItems: 'center', gap: 8 },
+  time: { color: COLORS.text, fontSize: 36, fontWeight: '700', fontFamily: 'monospace' },
+  alarmLabel: { color: COLORS.textSecondary, fontSize: 12, marginTop: 2 },
+  challengeTags: { flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap' },
+  tag: { color: COLORS.textMuted, fontSize: 10, backgroundColor: COLORS.bgCardLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  testBtn: { borderWidth: 1, borderColor: COLORS.frost, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+  testText: { color: COLORS.frost, fontSize: 10, fontWeight: '700' },
+  // Empty
+  empty: { alignItems: 'center', paddingVertical: 40 },
+  emptyEmoji: { fontSize: 48, marginBottom: 12 },
+  emptyText: { color: COLORS.textSecondary, fontSize: 18, fontWeight: '600' },
+  emptySubtext: { color: COLORS.textMuted, fontSize: 13, marginTop: 4 },
+  // Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: COLORS.bgSurface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, maxHeight: '90%' },
+  modalTitle: { color: COLORS.text, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 20 },
+  // Time picker
+  timePickerRow: { flexDirection: 'row', justifyContent: 'center', gap: 60 },
+  timeBtn: { padding: 12 },
+  timeBtnText: { color: COLORS.frost, fontSize: 24 },
+  bigTime: { color: COLORS.text, fontSize: 56, fontWeight: '700', textAlign: 'center', fontFamily: 'monospace', marginVertical: 8 },
+  // Fields
+  fieldLabel: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600', marginTop: 20, marginBottom: 10 },
+  daysRow: { flexDirection: 'row', gap: 8, justifyContent: 'center', flexWrap: 'wrap' },
+  dayBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.bgCardLight, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
+  dayBtnActive: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
+  dayText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
+  dayTextActive: { color: COLORS.bg, fontWeight: '700' },
+  challengeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  challengeBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: COLORS.bgCardLight, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', width: '46%' },
+  challengeBtnActive: { borderColor: COLORS.gold, backgroundColor: COLORS.gold + '20' },
+  challengeEmoji: { fontSize: 20, marginBottom: 4 },
+  challengeLabel: { color: COLORS.textSecondary, fontSize: 11, fontWeight: '600' },
+  diffBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: COLORS.bgCardLight, borderWidth: 1, borderColor: COLORS.border },
+  diffBtnActive: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
+  diffText: { color: COLORS.textSecondary, fontSize: 11, fontWeight: '700' },
+  // Actions
+  modalActions: { flexDirection: 'row', gap: 10, marginTop: 24, justifyContent: 'flex-end' },
+  deleteBtn: { backgroundColor: COLORS.fire + '20', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: COLORS.fire },
+  deleteBtnText: { color: COLORS.fire, fontWeight: '700' },
+  cancelBtn: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border },
+  cancelText: { color: COLORS.textSecondary, fontWeight: '600' },
+  saveBtn: { backgroundColor: COLORS.gold, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 },
+  saveText: { color: COLORS.bg, fontWeight: '700' },
+});
