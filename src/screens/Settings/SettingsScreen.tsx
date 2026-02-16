@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Switch, TouchableOpacity, Alert, Linking } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Switch, TouchableOpacity, Alert, Linking, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../theme';
 import { usePlayerStore } from '../../stores/playerStore';
+import { useBiotechStore } from '../../stores/biotechStore';
 
 export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
@@ -14,10 +15,29 @@ export default function SettingsScreen() {
 
   const {
     charStats, graceTokenAvailable, graceTokenUsedCount,
-    recommendedDifficulty, stats, getWakeScore,
+    recommendedDifficulty, stats, getWakeScore, currentStreak,
   } = usePlayerStore();
 
+  const {
+    biotechModeEnabled, toggleBiotechMode,
+    referralCode, referralShareCount, odinBetaUnlocked,
+    biotechTriviaCorrect, biotechHintsUnlocked,
+    generateReferralCode, recordReferralShare,
+  } = useBiotechStore();
+
   const wakeScore = getWakeScore();
+
+  const handleReferralShare = async () => {
+    const code = generateReferralCode();
+    try {
+      const result = await Share.share({
+        message: `Join me on RISE — the RPG alarm clock! Use my code ${code} for bonus quests. 🔥 ${currentStreak}-day streak and counting!\n\npdufa.bio/rise`,
+      });
+      if (result.action === Share.sharedAction) {
+        recordReferralShare();
+      }
+    } catch { }
+  };
 
   return (
     <SafeAreaView style={s.safe}>
@@ -127,12 +147,69 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* === BIOTECH MODE === */}
+        <Text style={s.section}>BIOTECH MODE</Text>
+        <View style={s.card}>
+          <View style={s.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.rowLabel}>🧬 Biotech Mode</Text>
+              <Text style={s.ctaDesc}>PDUFA bosses, biotech trivia, FDA hints</Text>
+            </View>
+            <Switch
+              value={biotechModeEnabled}
+              onValueChange={toggleBiotechMode}
+              trackColor={{ false: COLORS.bgCardLight, true: COLORS.frost + '50' }}
+              thumbColor={biotechModeEnabled ? COLORS.frost : COLORS.textMuted}
+            />
+          </View>
+          {biotechModeEnabled && (
+            <>
+              <View style={s.row}>
+                <Text style={s.rowLabel}>Biotech Trivia Correct</Text>
+                <Text style={[s.rowValue, { color: COLORS.frost }]}>{biotechTriviaCorrect}</Text>
+              </View>
+              <View style={s.row}>
+                <Text style={s.rowLabel}>PDUFA Hints Unlocked</Text>
+                <Text style={[s.rowValue, { color: COLORS.emerald }]}>{biotechHintsUnlocked}</Text>
+              </View>
+            </>
+          )}
+        </View>
+
+        {/* === REFERRAL / SHARE === */}
+        <Text style={s.section}>SHARE & EARN</Text>
+        <View style={s.card}>
+          <TouchableOpacity style={s.row} onPress={handleReferralShare}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.rowLabel}>📤 Share Your Streak</Text>
+              <Text style={s.ctaDesc}>
+                {odinBetaUnlocked
+                  ? '✅ ODIN Beta Access Unlocked!'
+                  : `Share ${3 - referralShareCount} more times for ODIN beta access`}
+              </Text>
+            </View>
+            <Text style={s.ctaArrow}>→</Text>
+          </TouchableOpacity>
+          {referralCode ? (
+            <View style={s.row}>
+              <Text style={s.rowLabel}>Your Referral Code</Text>
+              <Text style={[s.rowValue, { color: COLORS.gold, fontWeight: '800', fontFamily: 'monospace' }]}>
+                {referralCode}
+              </Text>
+            </View>
+          ) : null}
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Referral Shares</Text>
+            <Text style={s.rowValue}>{referralShareCount}</Text>
+          </View>
+        </View>
+
         {/* About */}
         <Text style={s.section}>ABOUT</Text>
         <View style={s.card}>
           <View style={s.row}>
             <Text style={s.rowLabel}>Version</Text>
-            <Text style={s.rowValue}>1.1.0</Text>
+            <Text style={s.rowValue}>1.2.0</Text>
           </View>
           <View style={s.row}>
             <Text style={s.rowLabel}>Built by</Text>

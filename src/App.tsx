@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -14,6 +14,7 @@ import ArenaScreen from './screens/Arena/ArenaScreen';
 import IntelScreen from './screens/Intel/IntelScreen';
 import HeroScreen from './screens/Hero/HeroScreen';
 import SettingsScreen from './screens/Settings/SettingsScreen';
+import OnboardingScreen, { hasCompletedOnboarding } from './screens/Onboarding/OnboardingScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -43,11 +44,32 @@ const TAB_ICONS: Record<string, string> = {
 export default function App() {
   const { activeAlarmId } = useAlarmStore();
   const { resetBossIfNewWeek } = usePlayerStore();
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
 
-  // Reset boss if new week
+  // Reset boss if new week + check onboarding
   useEffect(() => {
     resetBossIfNewWeek();
+    hasCompletedOnboarding().then((done) => setShowOnboarding(!done));
   }, []);
+
+  // Loading state
+  if (showOnboarding === null) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, backgroundColor: COLORS.bg }} />
+      </SafeAreaProvider>
+    );
+  }
+
+  // Show onboarding for first-time users
+  if (showOnboarding) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <OnboardingScreen onComplete={() => setShowOnboarding(false)} />
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>

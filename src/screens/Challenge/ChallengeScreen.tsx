@@ -10,6 +10,9 @@ import ShakeChallenge from '../../components/challenges/ShakeChallenge';
 import MemoryMatch from '../../components/challenges/MemoryMatch';
 import TypingChallenge from '../../components/challenges/TypingChallenge';
 import StepsChallenge from '../../components/challenges/StepsChallenge';
+import ReviewPrompt from '../../components/Common/ReviewPrompt';
+import { shareResult, type ShareEvent } from '../../utils/share';
+import { getBossForWeek, getWeekNumber } from '../../data/bosses';
 import type { Achievement } from '../../data/achievements';
 
 type Phase = 'ringing' | 'challenge' | 'victory' | 'wakeproof_pending' | 'wakeproof_check' | 'routine';
@@ -26,6 +29,8 @@ export default function ChallengeScreen() {
   const [result, setResult] = useState<any>(null);
   const [wakeProofCountdown, setWakeProofCountdown] = useState(0);
   const [routineComplete, setRoutineComplete] = useState<string[]>([]);
+  const [reviewTrigger, setReviewTrigger] = useState<'streak' | 'boss_defeat' | 'level_up' | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -87,6 +92,11 @@ export default function ChallengeScreen() {
         // All challenges complete — dismiss!
         const res = dismissAlarm(currentChallenge || 'math', snoozesUsed);
         setResult(res);
+
+        // Trigger review prompt based on event type
+        if (res.bossDefeated) setReviewTrigger('boss_defeat');
+        else if (res.leveledUp) setReviewTrigger('level_up');
+        else if (res.streakCount >= 3 && res.streakCount % 3 === 0) setReviewTrigger('streak');
 
         // Start wake proof if enabled
         if (alarm.wakeProofEnabled) {
@@ -207,8 +217,32 @@ export default function ChallengeScreen() {
 
   // VICTORY PHASE
   if (phase === 'victory' && result) {
+    const handleShare = async () => {
+      setShareLoading(true);
+      const boss = getBossForWeek(getWeekNumber());
+      const shared = await shareResult({
+        event: result.bossDefeated ? 'boss_defeat' : 'victory',
+        streak: result.streakCount,
+        wakeScore: result.wakeScore,
+        bossName: result.bossDefeated ? boss.name : undefined,
+        xp: result.xpEarned,
+        coins: result.coinsEarned,
+      });
+      setShareLoading(false);
+      // Bonus coins for sharing
+      if (shared) {
+        // Small reward tracked locally — coins handled via playerStore in future
+      }
+    };
+
     return (
       <SafeAreaView style={s.safe}>
+        {/* Review Prompt Overlay */}
+        <ReviewPrompt
+          totalWins={result.streakCount + (result.bossDefeated ? 1 : 0)}
+          triggerEvent={reviewTrigger}
+        />
+
         <View style={s.center}>
           <Text style={s.victoryEmoji}>⚔️</Text>
           <Text style={s.victoryTitle}>MORNING CONQUERED!</Text>
@@ -242,6 +276,11 @@ export default function ChallengeScreen() {
               ))}
             </View>
           )}
+
+          {/* Share Button */}
+          <TouchableOpacity style={s.shareBtn} onPress={handleShare} disabled={shareLoading}>
+            <Text style={s.shareText}>{shareLoading ? '...' : '📤 Share Victory'}</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity style={s.continueBtn} onPress={handleDismissVictory}>
             <Text style={s.continueText}>
@@ -362,7 +401,13 @@ const s = StyleSheet.create({
   bossDefeat: { color: COLORS.emerald, fontSize: 16, fontWeight: '700', marginTop: 8 },
   achievementList: { marginTop: 16, gap: 6 },
   achievementItem: { color: COLORS.purple, fontSize: 14, fontWeight: '600' },
-  continueBtn: { backgroundColor: COLORS.frost, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 14, marginTop: 32 },
+  shareBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: COLORS.purple + '60', paddingHorizontal: 24, paddingVertical: 10,
+    borderRadius: 12, marginTop: 16, backgroundColor: COLORS.purple + '15',
+  },
+  shareText: { color: COLORS.purple, fontSize: 14, fontWeight: '700' },
+  continueBtn: { backgroundColor: COLORS.frost, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 14, marginTop: 16 },
   continueText: { color: COLORS.bg, fontSize: 14, fontWeight: '800' },
   // Wake Proof
   wpEmoji: { fontSize: 64, marginBottom: 12 },
