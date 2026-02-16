@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, LEVEL_TITLES } from '../../theme';
 import { usePlayerStore, getXPProgress, getXPForNextLevel } from '../../stores/playerStore';
@@ -10,10 +10,15 @@ export default function HeroScreen() {
     xp, coins, level, title,
     currentStreak, longestStreak,
     stats, unlockedAchievements, sleepLog,
+    charStats, wakeScores,
+    graceTokenAvailable, graceTokenUsedCount,
+    recommendedDifficulty, todayRoutineComplete,
+    getWakeScore, useGraceToken,
   } = usePlayerStore();
 
   const progress = getXPProgress(xp, level);
   const nextXP = getXPForNextLevel(level);
+  const wakeScore = getWakeScore();
 
   // Streak multiplier
   const multiplier = currentStreak >= 7 ? '2.0×' : currentStreak >= 3 ? '1.5×' : '1.0×';
@@ -55,6 +60,73 @@ export default function HeroScreen() {
           </Text>
         </View>
 
+        {/* === WAKE SCORE === */}
+        <Text style={s.sectionTitle}>WAKE SCORE</Text>
+        <View style={s.wakeScoreCard}>
+          <View style={s.wakeScoreMain}>
+            <Text style={s.wakeScoreNumber}>{wakeScore.today}</Text>
+            <Text style={s.wakeScoreLabel}>TODAY</Text>
+          </View>
+          <View style={s.wakeScoreSide}>
+            <View style={s.wakeScoreMini}>
+              <Text style={s.wakeScoreMiniVal}>{wakeScore.weekAvg}</Text>
+              <Text style={s.wakeScoreMiniLabel}>7-Day Avg</Text>
+            </View>
+            <View style={s.wakeScoreMini}>
+              <Text style={s.wakeScoreMiniVal}>{wakeScore.allTime}</Text>
+              <Text style={s.wakeScoreMiniLabel}>All-Time</Text>
+            </View>
+          </View>
+        </View>
+        <Text style={s.wakeScoreHint}>
+          {wakeScore.today >= 90 ? '🔥 Legendary wake!' :
+           wakeScore.today >= 70 ? '⚡ Strong morning!' :
+           wakeScore.today >= 50 ? '🌅 Decent start' :
+           wakeScore.today > 0 ? '😴 Room to improve' : 'Dismiss an alarm to score'}
+        </Text>
+
+        {/* === CHARACTER STATS === */}
+        <Text style={s.sectionTitle}>CHARACTER STATS</Text>
+        <View style={s.charStatsCard}>
+          <CharStatBar label="⚔️ Discipline" value={charStats.discipline} color={COLORS.fire} />
+          <CharStatBar label="⚡ Energy" value={charStats.energy} color={COLORS.gold} />
+          <CharStatBar label="🎯 Consistency" value={charStats.consistency} color={COLORS.frost} />
+        </View>
+        <Text style={s.charStatsHint}>
+          Built from your wake habits over the last 14 days
+        </Text>
+
+        {/* === GRACE TOKEN === */}
+        <Text style={s.sectionTitle}>GRACE TOKEN</Text>
+        <View style={s.graceCard}>
+          <View style={s.graceRow}>
+            <Text style={s.graceEmoji}>{graceTokenAvailable ? '🛡️' : '⏳'}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.graceTitle}>
+                {graceTokenAvailable ? 'Token Available!' : 'Token Used This Month'}
+              </Text>
+              <Text style={s.graceDesc}>
+                {graceTokenAvailable
+                  ? 'Save your streak once if you miss a day'
+                  : 'Refreshes next month • Used ' + graceTokenUsedCount + '× total'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* === ADAPTIVE DIFFICULTY === */}
+        <Text style={s.sectionTitle}>ADAPTIVE DIFFICULTY</Text>
+        <View style={s.adaptiveCard}>
+          <Text style={s.adaptiveLabel}>🎯 Recommended</Text>
+          <Text style={s.adaptiveValue}>{(recommendedDifficulty || 'medium').toUpperCase()}</Text>
+          <Text style={s.adaptiveHint}>
+            Based on {stats.recentSuccessRate.length} recent challenges
+            ({stats.recentSuccessRate.length > 0
+              ? Math.round(stats.recentSuccessRate.reduce((a, b) => a + b, 0) / stats.recentSuccessRate.length * 100)
+              : 0}% success rate)
+          </Text>
+        </View>
+
         {/* Stats Grid */}
         <Text style={s.sectionTitle}>BATTLE STATS</Text>
         <View style={s.statsGrid}>
@@ -68,13 +140,34 @@ export default function HeroScreen() {
           <StatCard emoji="🌅" label="Earliest Wake" value={stats.earliestWake} accent={COLORS.frostGlow} />
         </View>
 
-        {/* Challenge Stats */}
+        {/* Challenge Mastery — now 6 types */}
         <Text style={s.sectionTitle}>CHALLENGE MASTERY</Text>
         <View style={s.masteryRow}>
           <MasteryItem emoji="⚡" label="Math" count={stats.totalMathSolved} />
           <MasteryItem emoji="📚" label="Trivia" count={stats.totalTriviaCorrect} />
           <MasteryItem emoji="📳" label="Shake" count={stats.totalShakesCompleted} />
+        </View>
+        <View style={[s.masteryRow, { marginTop: 10 }]}>
           <MasteryItem emoji="🧠" label="Memory" count={stats.totalMemoryCompleted} />
+          <MasteryItem emoji="✍️" label="Typing" count={stats.totalTypingCompleted} />
+          <MasteryItem emoji="🏃" label="Steps" count={stats.totalStepsCompleted} />
+        </View>
+
+        {/* Wake Proof Stats */}
+        <Text style={s.sectionTitle}>WAKE PROOF</Text>
+        <View style={s.wakeProofRow}>
+          <View style={s.wakeProofStat}>
+            <Text style={[s.wakeProofVal, { color: COLORS.emerald }]}>{stats.wakeProofPasses}</Text>
+            <Text style={s.wakeProofLabel}>Passed ✓</Text>
+          </View>
+          <View style={s.wakeProofStat}>
+            <Text style={[s.wakeProofVal, { color: COLORS.fire }]}>{stats.wakeProofFails}</Text>
+            <Text style={s.wakeProofLabel}>Failed ✗</Text>
+          </View>
+          <View style={s.wakeProofStat}>
+            <Text style={[s.wakeProofVal, { color: COLORS.gold }]}>{stats.routinesCompleted}</Text>
+            <Text style={s.wakeProofLabel}>Routines</Text>
+          </View>
         </View>
 
         {/* Sleep Overview (last 7 days) */}
@@ -94,13 +187,23 @@ export default function HeroScreen() {
               {last7.filter((d) => d.snoozed === 0).length} / {last7.length}
             </Text>
           </View>
+          <View style={s.sleepRow}>
+            <Text style={s.sleepLabel}>Avg Wake Score</Text>
+            <Text style={s.sleepValue}>
+              {last7.length > 0
+                ? Math.round(last7.reduce((a, d) => a + d.wakeScore, 0) / last7.length)
+                : '--'}
+            </Text>
+          </View>
           {/* Mini bar chart */}
           <View style={s.chartRow}>
             {Array.from({ length: 7 }).map((_, i) => {
               const entry = last7[i];
-              const height = entry ? Math.max(10, (entry.wakeTime / 720) * 60) : 5;
+              const height = entry ? Math.max(10, (entry.wakeScore / 100) * 60) : 5;
               const color = entry
-                ? entry.snoozed === 0 ? COLORS.emerald : COLORS.gold
+                ? entry.wakeScore >= 80 ? COLORS.emerald
+                : entry.wakeScore >= 50 ? COLORS.gold
+                : COLORS.fire
                 : COLORS.bgCardLight;
               return (
                 <View key={i} style={s.chartBar}>
@@ -135,6 +238,20 @@ export default function HeroScreen() {
   );
 }
 
+// === Sub-components ===
+
+function CharStatBar({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <View style={cs.row}>
+      <Text style={cs.label}>{label}</Text>
+      <View style={cs.barTrack}>
+        <View style={[cs.barFill, { width: `${Math.min(value, 100)}%`, backgroundColor: color }]} />
+      </View>
+      <Text style={[cs.value, { color }]}>{value}</Text>
+    </View>
+  );
+}
+
 function StatCard({ emoji, label, value, accent }: { emoji: string; label: string; value: string; accent: string }) {
   return (
     <View style={ss.statCard}>
@@ -154,6 +271,16 @@ function MasteryItem({ emoji, label, count }: { emoji: string; label: string; co
     </View>
   );
 }
+
+// === Styles ===
+
+const cs = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 10 },
+  label: { color: COLORS.text, fontSize: 13, fontWeight: '600', width: 110 },
+  barTrack: { flex: 1, height: 10, backgroundColor: COLORS.xpTrack, borderRadius: 5 },
+  barFill: { height: '100%', borderRadius: 5 },
+  value: { fontSize: 14, fontWeight: '800', fontFamily: 'monospace', width: 32, textAlign: 'right' },
+});
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
@@ -178,8 +305,52 @@ const s = StyleSheet.create({
   nextTitle: { color: COLORS.textMuted, fontSize: 11, marginTop: 6, textAlign: 'right', fontStyle: 'italic' },
   // Section
   sectionTitle: { color: COLORS.gold, fontSize: 13, fontWeight: '700', letterSpacing: 2, marginBottom: 12, marginTop: 8 },
+  // Wake Score
+  wakeScoreCard: {
+    backgroundColor: COLORS.bgCard, borderRadius: 16, padding: 20,
+    borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center',
+  },
+  wakeScoreMain: { alignItems: 'center', marginRight: 24 },
+  wakeScoreNumber: { color: COLORS.text, fontSize: 56, fontWeight: '800', fontFamily: 'monospace' },
+  wakeScoreLabel: { color: COLORS.gold, fontSize: 11, fontWeight: '700', letterSpacing: 2, marginTop: 4 },
+  wakeScoreSide: { flex: 1, gap: 12 },
+  wakeScoreMini: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  wakeScoreMiniVal: { color: COLORS.text, fontSize: 24, fontWeight: '700', fontFamily: 'monospace' },
+  wakeScoreMiniLabel: { color: COLORS.textMuted, fontSize: 11 },
+  wakeScoreHint: { color: COLORS.textMuted, fontSize: 12, marginTop: 8, fontStyle: 'italic', textAlign: 'center' },
+  // Character Stats
+  charStatsCard: {
+    backgroundColor: COLORS.bgCard, borderRadius: 16, padding: 20,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  charStatsHint: { color: COLORS.textMuted, fontSize: 11, marginTop: 6, fontStyle: 'italic' },
+  // Grace Token
+  graceCard: {
+    backgroundColor: COLORS.bgCard, borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  graceRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  graceEmoji: { fontSize: 36 },
+  graceTitle: { color: COLORS.text, fontSize: 15, fontWeight: '700' },
+  graceDesc: { color: COLORS.textMuted, fontSize: 12, marginTop: 2 },
+  // Adaptive Difficulty
+  adaptiveCard: {
+    backgroundColor: COLORS.bgCard, borderRadius: 14, padding: 16, alignItems: 'center',
+    borderWidth: 1, borderColor: COLORS.gold + '40',
+  },
+  adaptiveLabel: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '600' },
+  adaptiveValue: { color: COLORS.gold, fontSize: 28, fontWeight: '800', marginTop: 4, letterSpacing: 2 },
+  adaptiveHint: { color: COLORS.textMuted, fontSize: 11, marginTop: 6 },
   // Stats
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  // Wake Proof
+  wakeProofRow: { flexDirection: 'row', gap: 10 },
+  wakeProofStat: {
+    flex: 1, backgroundColor: COLORS.bgCard, borderRadius: 12, padding: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
+  },
+  wakeProofVal: { fontSize: 24, fontWeight: '800', fontFamily: 'monospace' },
+  wakeProofLabel: { color: COLORS.textMuted, fontSize: 10, marginTop: 4 },
   // Sleep
   sleepCard: { backgroundColor: COLORS.bgCard, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border },
   sleepRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../theme';
 import {
   useAlarmStore, formatTime, DAY_LABELS, createDefaultAlarm,
+  ROUTINE_TASKS,
   type Alarm, type ChallengeType, type Difficulty
 } from '../../stores/alarmStore';
 import { usePlayerStore } from '../../stores/playerStore';
@@ -18,13 +19,16 @@ const CHALLENGE_OPTIONS: { type: ChallengeType; label: string; emoji: string }[]
   { type: 'trivia', label: 'Wisdom Test', emoji: '📚' },
   { type: 'shake', label: 'Shake Fury', emoji: '📳' },
   { type: 'memory', label: 'Memory Runes', emoji: '🧠' },
+  { type: 'typing', label: 'Scribe Trial', emoji: '✍️' },
+  { type: 'steps', label: 'March of Dawn', emoji: '🏃' },
 ];
 
 const DIFFICULTY_OPTIONS: Difficulty[] = ['easy', 'medium', 'hard', 'viking'];
+const WAKE_PROOF_DELAYS = [3, 5, 10, 15]; // minutes
 
 export default function AlarmsScreen() {
   const { alarms, addAlarm, updateAlarm, deleteAlarm, toggleAlarm, setActiveAlarm } = useAlarmStore();
-  const { currentStreak, coins } = usePlayerStore();
+  const { currentStreak, coins, recommendedDifficulty } = usePlayerStore();
   const [editModal, setEditModal] = useState(false);
   const [editAlarm, setEditAlarm] = useState<Alarm | null>(null);
   const [hour, setHour] = useState(7);
@@ -35,6 +39,10 @@ export default function AlarmsScreen() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [challengeCount, setChallengeCount] = useState(2);
   const [snoozeLimit, setSnoozeLimit] = useState(2);
+  // New v1.1 fields
+  const [wakeProofEnabled, setWakeProofEnabled] = useState(true);
+  const [wakeProofDelay, setWakeProofDelay] = useState(5);
+  const [morningRoutine, setMorningRoutine] = useState<string[]>(['water', 'stretch']);
 
   const openNewAlarm = () => {
     setEditAlarm(null);
@@ -46,6 +54,9 @@ export default function AlarmsScreen() {
     setDifficulty('medium');
     setChallengeCount(2);
     setSnoozeLimit(2);
+    setWakeProofEnabled(true);
+    setWakeProofDelay(5);
+    setMorningRoutine(['water', 'stretch']);
     setEditModal(true);
   };
 
@@ -59,6 +70,9 @@ export default function AlarmsScreen() {
     setDifficulty(alarm.difficulty);
     setChallengeCount(alarm.challengeCount);
     setSnoozeLimit(alarm.snoozeLimit);
+    setWakeProofEnabled(alarm.wakeProofEnabled ?? true);
+    setWakeProofDelay(alarm.wakeProofDelayMin ?? 5);
+    setMorningRoutine([...(alarm.morningRoutine || ['water', 'stretch'])]);
     setEditModal(true);
   };
 
@@ -67,6 +81,9 @@ export default function AlarmsScreen() {
       hour, minute, label, enabled: true, days,
       challenges, challengeCount, difficulty, snoozeLimit,
       vibrate: true, sound: 'viking_horn',
+      wakeProofEnabled,
+      wakeProofDelayMin: wakeProofDelay,
+      morningRoutine,
     };
     if (editAlarm) {
       updateAlarm(editAlarm.id, data);
@@ -90,12 +107,21 @@ export default function AlarmsScreen() {
     }
   };
 
+  const toggleRoutineTask = (taskId: string) => {
+    if (morningRoutine.includes(taskId)) {
+      setMorningRoutine(morningRoutine.filter((t) => t !== taskId));
+    } else {
+      setMorningRoutine([...morningRoutine, taskId]);
+    }
+  };
+
   const testAlarm = (alarm: Alarm) => {
     setActiveAlarm(alarm.id);
   };
 
   const renderAlarm = ({ item }: { item: Alarm }) => {
     const activeDays = item.days.map((d, i) => d ? DAY_LABELS[i] : null).filter(Boolean).join(' ');
+    const allChallengeOptions = CHALLENGE_OPTIONS;
     return (
       <TouchableOpacity style={s.alarmCard} onPress={() => openEditAlarm(item)} activeOpacity={0.7}>
         <View style={s.alarmLeft}>
@@ -103,11 +129,14 @@ export default function AlarmsScreen() {
           <Text style={s.alarmLabel}>{item.label || activeDays || 'One-time'}</Text>
           <View style={s.challengeTags}>
             {item.challenges.map((c) => {
-              const opt = CHALLENGE_OPTIONS.find((o) => o.type === c);
+              const opt = allChallengeOptions.find((o) => o.type === c);
               return (
                 <Text key={c} style={s.tag}>{opt?.emoji} {opt?.label}</Text>
               );
             })}
+            {item.wakeProofEnabled && (
+              <Text style={[s.tag, { borderColor: COLORS.frost + '40' }]}>🛡️ Wake Proof</Text>
+            )}
           </View>
         </View>
         <View style={s.alarmRight}>
@@ -141,6 +170,15 @@ export default function AlarmsScreen() {
         </View>
 
         <XPBar />
+
+        {/* Adaptive Difficulty Recommendation */}
+        {recommendedDifficulty && recommendedDifficulty !== 'medium' && (
+          <View style={s.recBanner}>
+            <Text style={s.recText}>
+              🎯 ODIN recommends: <Text style={s.recValue}>{recommendedDifficulty.toUpperCase()}</Text> difficulty
+            </Text>
+          </View>
+        )}
 
         {/* Boss Widget */}
         <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
@@ -210,7 +248,7 @@ export default function AlarmsScreen() {
                 ))}
               </View>
 
-              {/* Challenges */}
+              {/* Challenges — now 6 types */}
               <Text style={s.fieldLabel}>Dismiss Challenges</Text>
               <View style={s.challengeRow}>
                 {CHALLENGE_OPTIONS.map((opt) => (
@@ -273,6 +311,60 @@ export default function AlarmsScreen() {
                 ))}
               </View>
 
+              {/* === WAKE PROOF === */}
+              <Text style={s.fieldLabel}>🛡️ Wake Proof (Post-Dismissal Check)</Text>
+              <View style={s.wakeProofToggle}>
+                <Text style={s.wakeProofText}>
+                  {wakeProofEnabled ? 'Enabled — re-check after dismissal' : 'Disabled'}
+                </Text>
+                <Switch
+                  value={wakeProofEnabled}
+                  onValueChange={setWakeProofEnabled}
+                  trackColor={{ false: COLORS.bgCardLight, true: COLORS.frost + '50' }}
+                  thumbColor={wakeProofEnabled ? COLORS.frost : COLORS.textMuted}
+                />
+              </View>
+              {wakeProofEnabled && (
+                <>
+                  <Text style={s.subLabel}>Re-check after (minutes):</Text>
+                  <View style={s.daysRow}>
+                    {WAKE_PROOF_DELAYS.map((d) => (
+                      <TouchableOpacity
+                        key={d}
+                        style={[s.dayBtn, wakeProofDelay === d && s.dayBtnActive]}
+                        onPress={() => setWakeProofDelay(d)}
+                      >
+                        <Text style={[s.dayText, wakeProofDelay === d && s.dayTextActive]}>{d}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {/* === MORNING ROUTINE === */}
+              <Text style={s.fieldLabel}>🌅 Morning Routine Tasks</Text>
+              <Text style={s.subLabel}>Select tasks to complete after alarm dismissal</Text>
+              <View style={s.routineGrid}>
+                {ROUTINE_TASKS.map((task) => (
+                  <TouchableOpacity
+                    key={task.id}
+                    style={[
+                      s.routineChip,
+                      morningRoutine.includes(task.id) && s.routineChipActive,
+                    ]}
+                    onPress={() => toggleRoutineTask(task.id)}
+                  >
+                    <Text style={s.routineEmoji}>{task.emoji}</Text>
+                    <Text style={[
+                      s.routineLabel,
+                      morningRoutine.includes(task.id) && { color: COLORS.text },
+                    ]}>
+                      {task.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
               {/* Actions */}
               <View style={s.modalActions}>
                 {editAlarm && (
@@ -307,6 +399,20 @@ const s = StyleSheet.create({
   subtitle: { color: COLORS.textSecondary, fontSize: 11, letterSpacing: 1, marginTop: 2 },
   statsRow: { flexDirection: 'row', gap: 12 },
   statItem: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
+  // Recommendation banner
+  recBanner: {
+    backgroundColor: COLORS.gold + '15',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.gold + '30',
+  },
+  recText: { color: COLORS.textSecondary, fontSize: 12, textAlign: 'center' },
+  recValue: { color: COLORS.gold, fontWeight: '800' },
+  // Section
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 12 },
   sectionTitle: { color: COLORS.text, fontSize: 14, fontWeight: '700', letterSpacing: 2 },
   addBtn: { backgroundColor: COLORS.gold, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8 },
@@ -345,19 +451,38 @@ const s = StyleSheet.create({
   bigTime: { color: COLORS.text, fontSize: 56, fontWeight: '700', textAlign: 'center', fontFamily: 'monospace', marginVertical: 8 },
   // Fields
   fieldLabel: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600', marginTop: 20, marginBottom: 10 },
+  subLabel: { color: COLORS.textMuted, fontSize: 11, marginBottom: 8 },
   daysRow: { flexDirection: 'row', gap: 8, justifyContent: 'center', flexWrap: 'wrap' },
   dayBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.bgCardLight, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
   dayBtnActive: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
   dayText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
   dayTextActive: { color: COLORS.bg, fontWeight: '700' },
   challengeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-  challengeBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: COLORS.bgCardLight, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', width: '46%' },
+  challengeBtn: { paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, backgroundColor: COLORS.bgCardLight, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', width: '30%' },
   challengeBtnActive: { borderColor: COLORS.gold, backgroundColor: COLORS.gold + '20' },
   challengeEmoji: { fontSize: 20, marginBottom: 4 },
-  challengeLabel: { color: COLORS.textSecondary, fontSize: 11, fontWeight: '600' },
+  challengeLabel: { color: COLORS.textSecondary, fontSize: 10, fontWeight: '600' },
   diffBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: COLORS.bgCardLight, borderWidth: 1, borderColor: COLORS.border },
   diffBtnActive: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
   diffText: { color: COLORS.textSecondary, fontSize: 11, fontWeight: '700' },
+  // Wake Proof
+  wakeProofToggle: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: COLORS.bgCardLight, borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  wakeProofText: { color: COLORS.textSecondary, fontSize: 13, flex: 1 },
+  // Morning Routine
+  routineGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  routineChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10,
+    backgroundColor: COLORS.bgCardLight, borderWidth: 1, borderColor: COLORS.border,
+    width: '47%',
+  },
+  routineChipActive: { borderColor: COLORS.emerald, backgroundColor: COLORS.emerald + '15' },
+  routineEmoji: { fontSize: 16 },
+  routineLabel: { color: COLORS.textSecondary, fontSize: 11, fontWeight: '600' },
   // Actions
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 24, justifyContent: 'flex-end' },
   deleteBtn: { backgroundColor: COLORS.fire + '20', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: COLORS.fire },

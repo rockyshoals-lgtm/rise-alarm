@@ -2,17 +2,47 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Switch, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../theme';
+import { usePlayerStore } from '../../stores/playerStore';
 
 export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
   const [vibration, setVibration] = useState(true);
-  const [volume, setVolume] = useState(80);
   const [gradualVolume, setGradualVolume] = useState(true);
+  const [wakeProofDefault, setWakeProofDefault] = useState(true);
+  const [morningRoutineDefault, setMorningRoutineDefault] = useState(true);
+  const [adaptiveDifficultyEnabled, setAdaptiveDifficultyEnabled] = useState(true);
+
+  const {
+    charStats, graceTokenAvailable, graceTokenUsedCount,
+    recommendedDifficulty, stats, getWakeScore,
+  } = usePlayerStore();
+
+  const wakeScore = getWakeScore();
 
   return (
     <SafeAreaView style={s.safe}>
       <ScrollView contentContainerStyle={s.content}>
         <Text style={s.title}>⚙️ SETTINGS</Text>
+
+        {/* Quick Stats Bar */}
+        <View style={s.quickStats}>
+          <View style={s.qStat}>
+            <Text style={s.qVal}>{wakeScore.allTime}</Text>
+            <Text style={s.qLabel}>Wake Score</Text>
+          </View>
+          <View style={s.qStat}>
+            <Text style={s.qVal}>{charStats.discipline}</Text>
+            <Text style={s.qLabel}>Discipline</Text>
+          </View>
+          <View style={s.qStat}>
+            <Text style={s.qVal}>{charStats.energy}</Text>
+            <Text style={s.qLabel}>Energy</Text>
+          </View>
+          <View style={s.qStat}>
+            <Text style={s.qVal}>{charStats.consistency}</Text>
+            <Text style={s.qLabel}>Consistency</Text>
+          </View>
+        </View>
 
         {/* Alarm Settings */}
         <Text style={s.section}>ALARM</Text>
@@ -35,17 +65,66 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Wake Proof Settings */}
+        <Text style={s.section}>WAKE PROOF</Text>
+        <View style={s.card}>
+          <SettingRow
+            label="Default Wake Proof On"
+            value={wakeProofDefault}
+            onToggle={setWakeProofDefault}
+          />
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Wake Proof Passes</Text>
+            <Text style={[s.rowValue, { color: COLORS.emerald }]}>{stats.wakeProofPasses}</Text>
+          </View>
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Wake Proof Fails</Text>
+            <Text style={[s.rowValue, { color: COLORS.fire }]}>{stats.wakeProofFails}</Text>
+          </View>
+        </View>
+
+        {/* Morning Routine */}
+        <Text style={s.section}>MORNING ROUTINE</Text>
+        <View style={s.card}>
+          <SettingRow
+            label="Show Routine After Alarm"
+            value={morningRoutineDefault}
+            onToggle={setMorningRoutineDefault}
+          />
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Routines Completed</Text>
+            <Text style={s.rowValue}>{stats.routinesCompleted}</Text>
+          </View>
+        </View>
+
         {/* Game Settings */}
         <Text style={s.section}>GAME</Text>
         <View style={s.card}>
-          <TouchableOpacity style={s.row}>
-            <Text style={s.rowLabel}>Default Difficulty</Text>
-            <Text style={s.rowValue}>Medium</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.row}>
-            <Text style={s.rowLabel}>Default Challenges</Text>
-            <Text style={s.rowValue}>2</Text>
-          </TouchableOpacity>
+          <SettingRow
+            label="Adaptive Difficulty"
+            value={adaptiveDifficultyEnabled}
+            onToggle={setAdaptiveDifficultyEnabled}
+          />
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Recommended Difficulty</Text>
+            <Text style={[s.rowValue, { color: COLORS.gold }]}>
+              {(recommendedDifficulty || 'medium').toUpperCase()}
+            </Text>
+          </View>
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Grace Token</Text>
+            <Text style={[s.rowValue, { color: graceTokenAvailable ? COLORS.emerald : COLORS.textMuted }]}>
+              {graceTokenAvailable ? '🛡️ Available' : `⏳ Used (${graceTokenUsedCount}× total)`}
+            </Text>
+          </View>
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Success Rate</Text>
+            <Text style={s.rowValue}>
+              {stats.recentSuccessRate.length > 0
+                ? Math.round(stats.recentSuccessRate.reduce((a, b) => a + b, 0) / stats.recentSuccessRate.length * 100) + '%'
+                : 'N/A'}
+            </Text>
+          </View>
         </View>
 
         {/* About */}
@@ -53,7 +132,7 @@ export default function SettingsScreen() {
         <View style={s.card}>
           <View style={s.row}>
             <Text style={s.rowLabel}>Version</Text>
-            <Text style={s.rowValue}>1.0.0</Text>
+            <Text style={s.rowValue}>1.1.0</Text>
           </View>
           <View style={s.row}>
             <Text style={s.rowLabel}>Built by</Text>
@@ -95,6 +174,17 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
   content: { padding: 20, paddingBottom: 100 },
   title: { color: COLORS.text, fontSize: 24, fontWeight: '800', letterSpacing: 2, marginBottom: 16 },
+  // Quick stats
+  quickStats: {
+    flexDirection: 'row', gap: 8, marginBottom: 16,
+  },
+  qStat: {
+    flex: 1, backgroundColor: COLORS.bgCard, borderRadius: 12, padding: 12,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
+  },
+  qVal: { color: COLORS.text, fontSize: 20, fontWeight: '800', fontFamily: 'monospace' },
+  qLabel: { color: COLORS.textMuted, fontSize: 9, marginTop: 2, letterSpacing: 0.5 },
+  // Sections
   section: { color: COLORS.gold, fontSize: 12, fontWeight: '700', letterSpacing: 2, marginTop: 20, marginBottom: 10 },
   card: { backgroundColor: COLORS.bgCard, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' },
   row: {

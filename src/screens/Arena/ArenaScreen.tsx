@@ -9,6 +9,8 @@ import MathChallenge from '../../components/challenges/MathChallenge';
 import TriviaChallenge from '../../components/challenges/TriviaChallenge';
 import ShakeChallenge from '../../components/challenges/ShakeChallenge';
 import MemoryMatch from '../../components/challenges/MemoryMatch';
+import TypingChallenge from '../../components/challenges/TypingChallenge';
+import StepsChallenge from '../../components/challenges/StepsChallenge';
 import type { ChallengeType } from '../../stores/alarmStore';
 
 type Mode = 'menu' | 'practice';
@@ -18,12 +20,14 @@ const PRACTICE_OPTIONS: { type: ChallengeType; label: string; emoji: string; des
   { type: 'trivia', label: 'Wisdom Test', emoji: '📚', desc: 'Answer trivia questions' },
   { type: 'shake', label: 'Shake Fury', emoji: '📳', desc: 'Shake your phone to fill the meter' },
   { type: 'memory', label: 'Memory Runes', emoji: '🧠', desc: 'Match pairs of Nordic runes' },
+  { type: 'typing', label: 'Scribe Trial', emoji: '✍️', desc: 'Type motivational quotes exactly' },
+  { type: 'steps', label: 'March of Dawn', emoji: '🏃', desc: 'March in place to wake up' },
 ];
 
 export default function ArenaScreen() {
   const [mode, setMode] = useState<Mode>('menu');
   const [activeChallenge, setActiveChallenge] = useState<ChallengeType | null>(null);
-  const { practiceChallenge, boss, stats } = usePlayerStore();
+  const { practiceChallenge, boss, stats, recommendedDifficulty } = usePlayerStore();
   const weekBoss = getBossForWeek(getWeekNumber());
 
   const startPractice = (type: ChallengeType) => {
@@ -47,13 +51,20 @@ export default function ArenaScreen() {
         <TouchableOpacity style={s.backBtn} onPress={() => { setMode('menu'); setActiveChallenge(null); }}>
           <Text style={s.backText}>← Back</Text>
         </TouchableOpacity>
-        {activeChallenge === 'math' && <MathChallenge difficulty="medium" onComplete={handleComplete} />}
+        {activeChallenge === 'math' && <MathChallenge difficulty={(recommendedDifficulty as any) || 'medium'} onComplete={handleComplete} />}
         {activeChallenge === 'trivia' && <TriviaChallenge onComplete={handleComplete} />}
-        {activeChallenge === 'shake' && <ShakeChallenge difficulty="medium" onComplete={handleComplete} />}
+        {activeChallenge === 'shake' && <ShakeChallenge difficulty={(recommendedDifficulty as any) || 'medium'} onComplete={handleComplete} />}
         {activeChallenge === 'memory' && <MemoryMatch onComplete={handleComplete} />}
+        {activeChallenge === 'typing' && <TypingChallenge onComplete={handleComplete} />}
+        {activeChallenge === 'steps' && <StepsChallenge difficulty={(recommendedDifficulty as any) || 'medium'} onComplete={handleComplete} />}
       </SafeAreaView>
     );
   }
+
+  // Challenge mastery totals
+  const totalChallenges = stats.totalMathSolved + stats.totalTriviaCorrect +
+    stats.totalShakesCompleted + stats.totalMemoryCompleted +
+    stats.totalTypingCompleted + stats.totalStepsCompleted;
 
   return (
     <SafeAreaView style={s.safe}>
@@ -86,8 +97,15 @@ export default function ArenaScreen() {
           </View>
         </View>
 
+        {/* Adaptive Difficulty Badge */}
+        <View style={s.diffBadge}>
+          <Text style={s.diffBadgeLabel}>🎯 RECOMMENDED DIFFICULTY</Text>
+          <Text style={s.diffBadgeValue}>{(recommendedDifficulty || 'medium').toUpperCase()}</Text>
+          <Text style={s.diffBadgeHint}>Based on your last 20 challenges</Text>
+        </View>
+
         {/* Practice */}
-        <Text style={s.sectionTitle}>PRACTICE</Text>
+        <Text style={s.sectionTitle}>PRACTICE ({totalChallenges} completed)</Text>
         <Text style={s.practiceHint}>Earn +5 XP and +2 coins per practice win</Text>
 
         {PRACTICE_OPTIONS.map((opt) => (
@@ -121,6 +139,20 @@ const s = StyleSheet.create({
   combatStat: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
   combatValue: { color: COLORS.text, fontSize: 22, fontWeight: '800', fontFamily: 'monospace' },
   combatLabel: { color: COLORS.textMuted, fontSize: 10, marginTop: 4 },
+  // Adaptive Difficulty Badge
+  diffBadge: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: 14,
+    padding: 16,
+    marginTop: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.gold + '40',
+  },
+  diffBadgeLabel: { color: COLORS.textSecondary, fontSize: 11, fontWeight: '600', letterSpacing: 1 },
+  diffBadgeValue: { color: COLORS.gold, fontSize: 24, fontWeight: '800', marginTop: 4, letterSpacing: 2 },
+  diffBadgeHint: { color: COLORS.textMuted, fontSize: 10, marginTop: 4 },
+  // Practice
   practiceHint: { color: COLORS.textMuted, fontSize: 12, marginBottom: 12 },
   practiceCard: {
     backgroundColor: COLORS.bgCard,
