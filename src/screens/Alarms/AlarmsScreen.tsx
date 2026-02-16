@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, FlatList, StyleSheet, Switch, Modal,
-  ScrollView, Platform
+  ScrollView, Platform, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../theme';
@@ -192,6 +192,20 @@ export default function AlarmsScreen() {
             <Text style={s.addText}>+ NEW</Text>
           </TouchableOpacity>
         </View>
+
+        {/* pdufa.bio Cross-Promo Banner */}
+        <TouchableOpacity
+          style={s.promoBanner}
+          onPress={() => Linking.openURL('https://pdufa.bio')}
+          activeOpacity={0.8}
+        >
+          <Text style={s.promoEye}>👁️</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={s.promoTitle}>FDA Catalyst Intelligence</Text>
+            <Text style={s.promoDesc}>Track PDUFA dates with 96% accuracy</Text>
+          </View>
+          <Text style={s.promoArrow}>→</Text>
+        </TouchableOpacity>
 
         {alarms.length === 0 ? (
           <View style={s.empty}>
@@ -491,4 +505,15 @@ const s = StyleSheet.create({
   cancelText: { color: COLORS.textSecondary, fontWeight: '600' },
   saveBtn: { backgroundColor: COLORS.gold, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 },
   saveText: { color: COLORS.bg, fontWeight: '700' },
+  // Cross-promo banner
+  promoBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: COLORS.bgCard, borderRadius: 12,
+    marginHorizontal: 16, marginBottom: 16, padding: 14,
+    borderWidth: 1, borderColor: COLORS.frost + '30',
+  },
+  promoEye: { fontSize: 28 },
+  promoTitle: { color: COLORS.frost, fontSize: 13, fontWeight: '700' },
+  promoDesc: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+  promoArrow: { color: COLORS.frost, fontSize: 20, fontWeight: '700' },
 });

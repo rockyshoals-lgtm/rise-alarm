@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Switch, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Switch, TouchableOpacity, Alert, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../theme';
 import { usePlayerStore } from '../../stores/playerStore';
@@ -144,6 +144,41 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* ODIN Platform CTAs */}
+        <Text style={s.section}>ODIN PLATFORM</Text>
+        <View style={s.card}>
+          <TouchableOpacity
+            style={s.row}
+            onPress={() => Linking.openURL('https://pdufa.bio')}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={s.rowLabel}>👁️ Visit pdufa.bio</Text>
+              <Text style={s.ctaDesc}>FDA catalyst intelligence · 96% accuracy</Text>
+            </View>
+            <Text style={s.ctaArrow}>→</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.row}
+            onPress={() => Linking.openURL('https://pdufa.bio/#waitlist')}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={s.rowLabel}>📧 Join the Waitlist</Text>
+              <Text style={s.ctaDesc}>Early access to ODIN scoring alerts</Text>
+            </View>
+            <Text style={s.ctaArrow}>→</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.row}
+            onPress={() => Linking.openURL('https://pdufa.bio/mobile')}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={s.rowLabel}>📱 Download ODIN Mobile</Text>
+              <Text style={s.ctaDesc}>PDUFA dates + push alerts on the go</Text>
+            </View>
+            <Text style={s.ctaArrow}>→</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Branding */}
         <View style={s.branding}>
           <Text style={s.brandEmoji}>👁️</Text>
@@ -199,4 +234,7 @@ const s = StyleSheet.create({
   brandName: { color: COLORS.gold, fontSize: 20, fontWeight: '800', letterSpacing: 2 },
   brandTag: { color: COLORS.textSecondary, fontSize: 13, marginTop: 4, fontStyle: 'italic' },
   brandSub: { color: COLORS.textMuted, fontSize: 11, marginTop: 8 },
+  // CTA styles
+  ctaDesc: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+  ctaArrow: { color: COLORS.frost, fontSize: 20, fontWeight: '700' },
 });

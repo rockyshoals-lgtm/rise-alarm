@@ -33,6 +33,9 @@ export default function BossWidget() {
       <Text style={s.loot}>
         Loot: {weekBoss.loot.coins} coins + {weekBoss.loot.xp} XP · Weak to: {weekBoss.weakTo}
       </Text>
+
+      {/* PDUFA-themed lore */}
+      <Text style={s.lore}>{weekBoss.lore}</Text>
     </View>
   );
 }
@@ -55,4 +58,5 @@ const s = StyleSheet.create({
   hpFill: { height: '100%', borderRadius: 5 },
   hpText: { color: COLORS.textSecondary, fontSize: 11, fontFamily: 'monospace', textAlign: 'right', marginTop: 4 },
   loot: { color: COLORS.textMuted, fontSize: 11 },
+  lore: { color: COLORS.textSecondary, fontSize: 11, fontStyle: 'italic', marginTop: 8, lineHeight: 16 },
 });

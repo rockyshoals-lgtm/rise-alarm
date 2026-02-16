@@ -11,6 +11,7 @@ import { usePlayerStore } from './stores/playerStore';
 import AlarmsScreen from './screens/Alarms/AlarmsScreen';
 import ChallengeScreen from './screens/Challenge/ChallengeScreen';
 import ArenaScreen from './screens/Arena/ArenaScreen';
+import IntelScreen from './screens/Intel/IntelScreen';
 import HeroScreen from './screens/Hero/HeroScreen';
 import SettingsScreen from './screens/Settings/SettingsScreen';
 
@@ -34,6 +35,7 @@ const TAB_ICONS: Record<string, string> = {
   Alarms: '⏰',
   Challenge: '⚔️',
   Arena: '🏟️',
+  Intel: '👁️',
   Hero: '👤',
   Settings: '⚙️',
 };
@@ -82,6 +84,13 @@ export default function App() {
             }}
           />
           <Tab.Screen name="Arena" component={ArenaScreen} />
+          <Tab.Screen
+            name="Intel"
+            component={IntelScreen}
+            options={{
+              tabBarLabel: 'ODIN',
+            }}
+          />
           <Tab.Screen name="Hero" component={HeroScreen} />
           <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
