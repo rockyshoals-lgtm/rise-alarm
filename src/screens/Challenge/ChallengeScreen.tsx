@@ -10,12 +10,14 @@ import ShakeChallenge from '../../components/challenges/ShakeChallenge';
 import MemoryMatch from '../../components/challenges/MemoryMatch';
 import TypingChallenge from '../../components/challenges/TypingChallenge';
 import StepsChallenge from '../../components/challenges/StepsChallenge';
+import SocialChallenge from '../../components/challenges/SocialChallenge';
+import MorningBriefing from '../../components/challenges/MorningBriefing';
 import ReviewPrompt from '../../components/Common/ReviewPrompt';
 import { shareResult, type ShareEvent } from '../../utils/share';
 import { getBossForWeek, getWeekNumber } from '../../data/bosses';
 import type { Achievement } from '../../data/achievements';
 
-type Phase = 'ringing' | 'challenge' | 'victory' | 'wakeproof_pending' | 'wakeproof_check' | 'routine';
+type Phase = 'ringing' | 'challenge' | 'victory' | 'briefing' | 'wakeproof_pending' | 'wakeproof_check' | 'routine';
 
 export default function ChallengeScreen() {
   const { activeAlarmId, setActiveAlarm, getAlarm, startWakeProof, wakeProofStatus, triggerWakeProofCheck, passWakeProof, failWakeProof, resetWakeProof, wakeProofDeadline } = useAlarmStore();
@@ -117,6 +119,19 @@ export default function ChallengeScreen() {
   };
 
   const handleDismissVictory = () => {
+    // Briefing first, then wakeproof, then routine
+    if (alarm.morningBriefingEnabled) {
+      setPhase('briefing');
+    } else if (alarm.wakeProofEnabled && wakeProofStatus === 'pending') {
+      setPhase('wakeproof_pending');
+    } else if (alarm.morningRoutine.length > 0) {
+      setPhase('routine');
+    } else {
+      finishAll();
+    }
+  };
+
+  const handleBriefingComplete = () => {
     if (alarm.wakeProofEnabled && wakeProofStatus === 'pending') {
       setPhase('wakeproof_pending');
     } else if (alarm.morningRoutine.length > 0) {
@@ -211,6 +226,7 @@ export default function ChallengeScreen() {
         {currentChallenge === 'memory' && <MemoryMatch onComplete={handleChallengeComplete} />}
         {currentChallenge === 'typing' && <TypingChallenge onComplete={handleChallengeComplete} />}
         {currentChallenge === 'steps' && <StepsChallenge difficulty={alarm.difficulty} onComplete={handleChallengeComplete} />}
+        {currentChallenge === 'social' && <SocialChallenge onComplete={handleChallengeComplete} />}
       </SafeAreaView>
     );
   }
@@ -288,6 +304,26 @@ export default function ChallengeScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  // BRIEFING PHASE
+  if (phase === 'briefing' && result) {
+    const boss = getBossForWeek(getWeekNumber());
+    return (
+      <SafeAreaView style={s.safe}>
+        <MorningBriefing
+          streak={result.streakCount}
+          xpEarned={result.xpEarned}
+          coinsEarned={result.coinsEarned}
+          wakeScore={result.wakeScore}
+          leveledUp={result.leveledUp}
+          bossDefeated={result.bossDefeated}
+          bossName={result.bossDefeated ? boss.name : undefined}
+          persona={alarm.briefingPersona ?? 'cheerful_coach'}
+          onComplete={handleBriefingComplete}
+        />
       </SafeAreaView>
     );
   }
