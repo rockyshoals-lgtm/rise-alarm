@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": false,
-    "description": "Conquer your morning with RPG alarm challenges! Beat bosses, build streaks, solve puzzles to wake up. Gamified alarm clock with Wake Score, adaptive difficulty, morning routines & PDUFA biotech mode. From the ODIN Intelligence Platform.",
+    "description": "Conquer your morning with RPG alarm challenges! Beat bosses, build streaks, solve puzzles to wake up. Gamified alarm clock with Wake Score, adaptive difficulty, smart wake, morning briefings & social alarms.",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "bio.pdufa.rise",
+      "bundleIdentifier": "com.rise.rpgalarm",
       "infoPlist": {
         "CFBundleDisplayName": "RISE RPG Alarm",
         "ITSAppUsesNonExemptEncryption": false
@@ -26,7 +26,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#030718"
       },
-      "package": "bio.pdufa.rise"
+      "package": "com.rise.rpgalarm"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -34,12 +34,13 @@
     },
     "plugins": [
       "expo-sensors",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-av"
     ],
     "extra": {
       "aso": {
         "subtitle": "Gamified Rise Challenges",
-        "keywords": "alarm,rpg,wake up,gamified,boss battle,streak,morning routine,wake score,pdufa,biotech,challenge,snooze,fitness,habit,discipline"
+        "keywords": "alarm,rpg,wake up,gamified,boss battle,streak,morning routine,wake score,smart wake,social alarm,challenge,snooze,fitness,habit,discipline"
       }
     }
   }
