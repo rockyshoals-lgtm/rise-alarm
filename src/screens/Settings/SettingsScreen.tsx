@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Switch, TouchableOpacity, Alert, Linking, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Speech from 'expo-speech';
 import { COLORS } from '../../theme';
 import { usePlayerStore } from '../../stores/playerStore';
 import { useProStore } from '../../stores/proStore';
+import { useSocialStore } from '../../stores/socialStore';
+import { BriefingPersona } from '../../stores/alarmStore';
 import ProBadge from '../../components/Common/ProBadge';
 import ProUpsellCard from '../../components/Common/ProUpsellCard';
 
@@ -14,6 +17,19 @@ export default function SettingsScreen() {
   const [wakeProofDefault, setWakeProofDefault] = useState(true);
   const [morningRoutineDefault, setMorningRoutineDefault] = useState(true);
   const [adaptiveDifficultyEnabled, setAdaptiveDifficultyEnabled] = useState(true);
+
+  // Smart Wake defaults
+  const [smartWakeDefault, setSmartWakeDefault] = useState(false);
+  const [smartWakeWindow, setSmartWakeWindow] = useState(30);
+  // Morning Briefing defaults
+  const [briefingDefault, setBriefingDefault] = useState(true);
+  const [briefingPersona, setBriefingPersona] = useState<BriefingPersona>('cheerful_coach');
+  const [testingSpeech, setTestingSpeech] = useState(false);
+  // Social Alarms
+  const [socialAlarmsEnabled, setSocialAlarmsEnabled] = useState(true);
+
+  const { messages, defaultMessageId } = useSocialStore();
+  const defaultMsg = defaultMessageId ? messages.find(m => m.id === defaultMessageId) : null;
 
   const {
     charStats, graceTokenAvailable, graceTokenUsedCount,
@@ -108,6 +124,123 @@ export default function SettingsScreen() {
           <View style={s.row}>
             <Text style={s.rowLabel}>Routines Completed</Text>
             <Text style={s.rowValue}>{stats.routinesCompleted}</Text>
+          </View>
+        </View>
+
+        {/* Smart Wake */}
+        <Text style={s.section}>SMART WAKE</Text>
+        <View style={s.card}>
+          <SettingRow
+            label="Default Smart Wake On"
+            value={smartWakeDefault}
+            onToggle={setSmartWakeDefault}
+          />
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Default Window</Text>
+            <View style={s.windowPicker}>
+              {[15, 20, 30, 45].map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  style={[s.windowBtn, smartWakeWindow === m && s.windowBtnActive]}
+                  onPress={() => setSmartWakeWindow(m)}
+                >
+                  <Text style={[s.windowBtnText, smartWakeWindow === m && s.windowBtnTextActive]}>
+                    {m}m
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          <View style={s.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.rowLabel}>💡 How It Works</Text>
+              <Text style={s.ctaDesc}>Place phone on bed, start Sleep Mode from alarm card. RISE wakes you during light sleep.</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Morning Briefing */}
+        <Text style={s.section}>MORNING BRIEFING</Text>
+        <View style={s.card}>
+          <SettingRow
+            label="Default Briefing On"
+            value={briefingDefault}
+            onToggle={setBriefingDefault}
+          />
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Default Persona</Text>
+            <View style={s.personaPicker}>
+              {([
+                { key: 'drill_sergeant' as BriefingPersona, emoji: '🎖️', label: 'Sergeant' },
+                { key: 'wise_elder' as BriefingPersona, emoji: '🧙', label: 'Elder' },
+                { key: 'cheerful_coach' as BriefingPersona, emoji: '🏋️', label: 'Coach' },
+              ]).map((p) => (
+                <TouchableOpacity
+                  key={p.key}
+                  style={[s.personaBtn, briefingPersona === p.key && s.personaBtnActive]}
+                  onPress={() => setBriefingPersona(p.key)}
+                >
+                  <Text style={s.personaEmoji}>{p.emoji}</Text>
+                  <Text style={[s.personaLabel, briefingPersona === p.key && s.personaLabelActive]}>
+                    {p.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          <TouchableOpacity
+            style={s.row}
+            onPress={() => {
+              if (testingSpeech) return;
+              setTestingSpeech(true);
+              const testLines: Record<BriefingPersona, string> = {
+                drill_sergeant: 'Soldier! Rise and shine! Your morning begins now. Move out!',
+                wise_elder: 'Another dawn awaits, warrior. Walk with wisdom today.',
+                cheerful_coach: "Let's go! Today is your day! You've got this!",
+              };
+              const configs: Record<BriefingPersona, { rate: number; pitch: number }> = {
+                drill_sergeant: { rate: 1.1, pitch: 0.8 },
+                wise_elder: { rate: 0.9, pitch: 1.0 },
+                cheerful_coach: { rate: 1.0, pitch: 1.1 },
+              };
+              Speech.speak(testLines[briefingPersona], {
+                ...configs[briefingPersona],
+                language: 'en-US',
+                onDone: () => setTestingSpeech(false),
+                onError: () => setTestingSpeech(false),
+              });
+            }}
+          >
+            <Text style={s.rowLabel}>
+              {testingSpeech ? '🔊 Speaking...' : '🔊 Test Briefing'}
+            </Text>
+            <Text style={s.ctaArrow}>→</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Social Alarms */}
+        <Text style={s.section}>SOCIAL ALARMS</Text>
+        <View style={s.card}>
+          <SettingRow
+            label="Enable Social Challenges"
+            value={socialAlarmsEnabled}
+            onToggle={setSocialAlarmsEnabled}
+          />
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Saved Messages</Text>
+            <Text style={s.rowValue}>{messages.length}</Text>
+          </View>
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Default Message</Text>
+            <Text style={[s.rowValue, { color: defaultMsg ? COLORS.frost : COLORS.textMuted }]}>
+              {defaultMsg ? `${defaultMsg.senderName} (${defaultMsg.duration}s)` : 'None'}
+            </Text>
+          </View>
+          <View style={s.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.rowLabel}>💡 Manage Messages</Text>
+              <Text style={s.ctaDesc}>Record, preview, and manage voice messages in the Arena tab → Social Alarms</Text>
+            </View>
           </View>
         </View>
 
@@ -272,4 +405,23 @@ const s = StyleSheet.create({
   // CTA styles
   ctaDesc: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
   ctaArrow: { color: COLORS.frost, fontSize: 20, fontWeight: '700' },
+  // Smart Wake window picker
+  windowPicker: { flexDirection: 'row', gap: 6 },
+  windowBtn: {
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
+    backgroundColor: COLORS.bgCardLight, borderWidth: 1, borderColor: COLORS.border,
+  },
+  windowBtnActive: { backgroundColor: COLORS.frost + '30', borderColor: COLORS.frost },
+  windowBtnText: { color: COLORS.textMuted, fontSize: 12, fontWeight: '700' },
+  windowBtnTextActive: { color: COLORS.frost },
+  // Persona picker
+  personaPicker: { flexDirection: 'row', gap: 8 },
+  personaBtn: {
+    alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 10, borderWidth: 1, borderColor: COLORS.border,
+  },
+  personaBtnActive: { borderColor: COLORS.gold, backgroundColor: COLORS.gold + '20' },
+  personaEmoji: { fontSize: 20 },
+  personaLabel: { color: COLORS.textMuted, fontSize: 9, fontWeight: '600', marginTop: 2 },
+  personaLabelActive: { color: COLORS.gold },
 });

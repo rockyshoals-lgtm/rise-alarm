@@ -13,8 +13,10 @@ import TypingChallenge from '../../components/challenges/TypingChallenge';
 import StepsChallenge from '../../components/challenges/StepsChallenge';
 import type { ChallengeType } from '../../stores/alarmStore';
 import AdBanner from '../../components/Common/AdBanner';
+import VoiceRecorder from '../../components/Social/VoiceRecorder';
+import MessageLibrary from '../../components/Social/MessageLibrary';
 
-type Mode = 'menu' | 'practice';
+type Mode = 'menu' | 'practice' | 'social_record';
 
 const PRACTICE_OPTIONS: { type: ChallengeType; label: string; emoji: string; desc: string }[] = [
   { type: 'math', label: 'Rune Math', emoji: '⚡', desc: 'Solve arithmetic under pressure' },
@@ -45,6 +47,18 @@ export default function ArenaScreen() {
       setActiveChallenge(null);
     }, 1200);
   }, [activeChallenge, practiceChallenge]);
+
+  // Voice Recorder mode
+  if (mode === 'social_record') {
+    return (
+      <SafeAreaView style={s.safe}>
+        <VoiceRecorder
+          onDone={() => setMode('menu')}
+          onCancel={() => setMode('menu')}
+        />
+      </SafeAreaView>
+    );
+  }
 
   if (mode === 'practice' && activeChallenge) {
     return (
@@ -127,6 +141,13 @@ export default function ArenaScreen() {
             <Text style={s.playArrow}>▶</Text>
           </TouchableOpacity>
         ))}
+
+        {/* Social Alarms Section */}
+        <Text style={s.sectionTitle}>👥 SOCIAL ALARMS</Text>
+        <Text style={s.practiceHint}>Record & manage wake-up messages from friends</Text>
+        <View style={s.socialSection}>
+          <MessageLibrary onRecordNew={() => setMode('social_record')} />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -175,4 +196,5 @@ const s = StyleSheet.create({
   playArrow: { color: COLORS.frost, fontSize: 18 },
   backBtn: { paddingHorizontal: 20, paddingVertical: 12 },
   backText: { color: COLORS.frost, fontSize: 15, fontWeight: '600' },
+  socialSection: { minHeight: 200 },
 });
