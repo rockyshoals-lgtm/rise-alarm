@@ -2,7 +2,7 @@ export interface TriviaQuestion {
   question: string;
   answers: string[];
   correctIndex: number;
-  category: 'science' | 'history' | 'geography' | 'general' | 'norse' | 'biotech';
+  category: 'science' | 'history' | 'geography' | 'general' | 'norse';
 }
 
 export const TRIVIA_POOL: TriviaQuestion[] = [
@@ -42,23 +42,6 @@ export const TRIVIA_POOL: TriviaQuestion[] = [
   { question: 'What event ends the Norse world?', answers: ['Götterdämmerung', 'Ragnarök', 'Fimbulwinter', 'Völuspá'], correctIndex: 1, category: 'norse' },
   { question: 'What bridge connects Midgard to Asgard?', answers: ['Gjallarbrú', 'Bifröst', 'Vindbláinn', 'Gimlé'], correctIndex: 1, category: 'norse' },
   { question: 'What are Odin\'s two ravens called?', answers: ['Geri & Freki', 'Huginn & Muninn', 'Tanngrisnir & Tanngnjóstr', 'Arvak & Alsvid'], correctIndex: 1, category: 'norse' },
-  // Biotech / FDA / Pharma
-  { question: 'What does PDUFA stand for?', answers: ['Pharma Drug Use Fee Act', 'Prescription Drug User Fee Act', 'Public Drug Utility Fund Act', 'Pharma Development User Fee Act'], correctIndex: 1, category: 'biotech' },
-  { question: 'What does the FDA acronym stand for?', answers: ['Federal Drug Agency', 'Food & Drug Administration', 'Federal Drug Administration', 'Food & Disease Agency'], correctIndex: 1, category: 'biotech' },
-  { question: 'What is a CRL in biotech investing?', answers: ['Clinical Research Letter', 'Complete Response Letter', 'Corporate Review License', 'Controlled Release Label'], correctIndex: 1, category: 'biotech' },
-  { question: 'What phase of clinical trials tests safety in healthy volunteers?', answers: ['Phase 0', 'Phase 1', 'Phase 2', 'Phase 3'], correctIndex: 1, category: 'biotech' },
-  { question: 'What is a "binary event" in biotech investing?', answers: ['A stock split', 'An FDA approval/rejection decision', 'Earnings report', 'A merger vote'], correctIndex: 1, category: 'biotech' },
-  { question: 'How many phases of clinical trials are there before FDA approval?', answers: ['2', '3', '4', '5'], correctIndex: 1, category: 'biotech' },
-  { question: 'What is an NDA in pharma?', answers: ['Non-Disclosure Agreement', 'New Drug Application', 'National Drug Act', 'Novel Drug Assessment'], correctIndex: 1, category: 'biotech' },
-  { question: 'What is a BLA?', answers: ['Basic Lab Analysis', 'Biologic License Application', 'Biotech Liability Act', 'Blood Level Assessment'], correctIndex: 1, category: 'biotech' },
-  { question: 'What does "breakthrough therapy" designation mean?', answers: ['Automatic approval', 'Expedited review for serious conditions', 'Phase 3 skip', 'Priority pricing'], correctIndex: 1, category: 'biotech' },
-  { question: 'What is the typical FDA standard review period?', answers: ['6 months', '10 months', '12 months', '18 months'], correctIndex: 1, category: 'biotech' },
-  { question: 'What does FDA priority review reduce the target to?', answers: ['3 months', '6 months', '8 months', '10 months'], correctIndex: 1, category: 'biotech' },
-  { question: 'What is an Advisory Committee (AdCom) vote?', answers: ['Internal FDA meeting', 'Expert panel recommendation to FDA', 'Congressional hearing', 'Company board vote'], correctIndex: 1, category: 'biotech' },
-  { question: 'What is an orphan drug?', answers: ['A recalled medication', 'A drug for rare diseases (<200k patients)', 'An over-the-counter drug', 'A generic copy'], correctIndex: 1, category: 'biotech' },
-  { question: 'What does ODIN stand for at pdufa.bio?', answers: ['Online Drug Intelligence Network', 'Omniscient Data Intelligence Node', 'Oncology Drug Info Network', 'It\'s a Norse mythology reference'], correctIndex: 3, category: 'biotech' },
-  { question: 'What is a PDUFA date?', answers: ['Drug patent expiry', 'FDA target action date for a drug application', 'Clinical trial start date', 'Drug launch date'], correctIndex: 1, category: 'biotech' },
-  { question: 'What percent of drugs that enter Phase 1 eventually get approved?', answers: ['~5%', '~14%', '~50%', '~75%'], correctIndex: 1, category: 'biotech' },
 ];
 
 export function getRandomTrivia(count: number): TriviaQuestion[] {

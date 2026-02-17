@@ -16,25 +16,25 @@ interface ShareData {
   coins?: number;
 }
 
-const HASHTAGS = '#RISERPG #ConquerYourMorning #pdufa';
+const HASHTAGS = '#RISERPG #ConquerYourMorning';
 
 function buildShareMessage(data: ShareData): string {
   switch (data.event) {
     case 'boss_defeat':
-      return `💀 Just defeated ${data.bossName || 'a PDUFA boss'} at dawn! ${data.streak || 0}-day wake streak. Can you survive the morning quest?\n\n${HASHTAGS}\n🔗 pdufa.bio/rise`;
+      return `💀 Just defeated ${data.bossName || 'a weekly boss'} at dawn! ${data.streak || 0}-day wake streak. Can you survive the morning quest?\n\n${HASHTAGS}`;
 
     case 'streak':
-      return `🔥 ${data.streak}-day wake streak in RISE! My discipline score is climbing. Who else is conquering their mornings?\n\n${HASHTAGS}\n🔗 pdufa.bio/rise`;
+      return `🔥 ${data.streak}-day wake streak in RISE! My discipline score is climbing. Who else is conquering their mornings?\n\n${HASHTAGS}`;
 
     case 'level_up':
-      return `⚡ Level ${data.level} — "${data.title}" unlocked in RISE! ${data.xp || 0} XP earned through morning battles.\n\n${HASHTAGS}\n🔗 pdufa.bio/rise`;
+      return `⚡ Level ${data.level} — "${data.title}" unlocked in RISE! ${data.xp || 0} XP earned through morning battles.\n\n${HASHTAGS}`;
 
     case 'wake_score':
-      return `🎯 Wake Score: ${data.wakeScore}/100 this morning! RISE tracks every snooze dodge, challenge, and routine.\n\n${HASHTAGS}\n🔗 pdufa.bio/rise`;
+      return `🎯 Wake Score: ${data.wakeScore}/100 this morning! RISE tracks every snooze dodge, challenge, and routine.\n\n${HASHTAGS}`;
 
     case 'victory':
     default:
-      return `⚔️ Morning conquered! ${data.wakeScore || '??'}/100 Wake Score, ${data.streak || 0}-day streak. RISE turns waking up into an RPG quest.\n\n${HASHTAGS}\n🔗 pdufa.bio/rise`;
+      return `⚔️ Morning conquered! ${data.wakeScore || '??'}/100 Wake Score, ${data.streak || 0}-day streak. RISE turns waking up into an RPG quest.\n\n${HASHTAGS}`;
   }
 }
 
@@ -43,10 +43,7 @@ export async function shareResult(data: ShareData): Promise<boolean> {
 
   try {
     const result = await Share.share(
-      {
-        message,
-        ...(Platform.OS === 'ios' ? { url: 'https://pdufa.bio/rise' } : {}),
-      },
+      { message },
       {
         dialogTitle: 'Share your RISE victory',
         subject: 'RISE: RPG Alarm Clock — Morning Conquered!',

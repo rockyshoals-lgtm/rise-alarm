@@ -44,8 +44,8 @@ export default function ProUpsellCard({ onUpgrade }: ProUpsellCardProps) {
         <Text style={s.benefitText}>2 grace tokens per month (instead of 1)</Text>
       </View>
       <View style={s.benefitRow}>
-        <Text style={s.benefitIcon}>{'👁️'}</Text>
-        <Text style={s.benefitText}>Priority ODIN catalyst access</Text>
+        <Text style={s.benefitIcon}>{'⚡'}</Text>
+        <Text style={s.benefitText}>Exclusive Pro challenges & badges</Text>
       </View>
 
       <TouchableOpacity style={s.upgradeBtn} onPress={handleUpgrade} activeOpacity={0.7}>

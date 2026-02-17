@@ -3,7 +3,6 @@ import { View, Text, ScrollView, StyleSheet, Switch, TouchableOpacity, Alert, Li
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../theme';
 import { usePlayerStore } from '../../stores/playerStore';
-import { useBiotechStore } from '../../stores/biotechStore';
 import { useProStore } from '../../stores/proStore';
 import ProBadge from '../../components/Common/ProBadge';
 import ProUpsellCard from '../../components/Common/ProUpsellCard';
@@ -21,27 +20,16 @@ export default function SettingsScreen() {
     recommendedDifficulty, stats, getWakeScore, currentStreak,
   } = usePlayerStore();
 
-  const {
-    biotechModeEnabled, toggleBiotechMode,
-    referralCode, referralShareCount, odinBetaUnlocked,
-    biotechTriviaCorrect, biotechHintsUnlocked,
-    generateReferralCode, recordReferralShare,
-  } = useBiotechStore();
-
   const { isPro, isProActive, proStartDate, proExpiryDate, purchaseSource, deactivatePro } = useProStore();
   const proActive = isProActive();
 
   const wakeScore = getWakeScore();
 
-  const handleReferralShare = async () => {
-    const code = generateReferralCode();
+  const handleShare = async () => {
     try {
-      const result = await Share.share({
-        message: `Join me on RISE — the RPG alarm clock! Use my code ${code} for bonus quests. 🔥 ${currentStreak}-day streak and counting!\n\npdufa.bio/rise`,
+      await Share.share({
+        message: `Join me on RISE — the RPG alarm clock that turns waking up into a quest! 🔥 ${currentStreak}-day streak and counting!\n\n#RISERPG #ConquerYourMorning`,
       });
-      if (result.action === Share.sharedAction) {
-        recordReferralShare();
-      }
     } catch { }
   };
 
@@ -153,35 +141,6 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* === BIOTECH MODE === */}
-        <Text style={s.section}>BIOTECH MODE</Text>
-        <View style={s.card}>
-          <View style={s.row}>
-            <View style={{ flex: 1 }}>
-              <Text style={s.rowLabel}>🧬 Biotech Mode</Text>
-              <Text style={s.ctaDesc}>PDUFA bosses, biotech trivia, FDA hints</Text>
-            </View>
-            <Switch
-              value={biotechModeEnabled}
-              onValueChange={toggleBiotechMode}
-              trackColor={{ false: COLORS.bgCardLight, true: COLORS.frost + '50' }}
-              thumbColor={biotechModeEnabled ? COLORS.frost : COLORS.textMuted}
-            />
-          </View>
-          {biotechModeEnabled && (
-            <>
-              <View style={s.row}>
-                <Text style={s.rowLabel}>Biotech Trivia Correct</Text>
-                <Text style={[s.rowValue, { color: COLORS.frost }]}>{biotechTriviaCorrect}</Text>
-              </View>
-              <View style={s.row}>
-                <Text style={s.rowLabel}>PDUFA Hints Unlocked</Text>
-                <Text style={[s.rowValue, { color: COLORS.emerald }]}>{biotechHintsUnlocked}</Text>
-              </View>
-            </>
-          )}
-        </View>
-
         {/* === RISE PRO === */}
         <View style={s.proSectionHeader}>
           <Text style={s.section}>RISE PRO</Text>
@@ -230,32 +189,16 @@ export default function SettingsScreen() {
           <ProUpsellCard />
         )}
 
-        {/* === REFERRAL / SHARE === */}
-        <Text style={s.section}>SHARE & EARN</Text>
+        {/* === SHARE === */}
+        <Text style={s.section}>SHARE</Text>
         <View style={s.card}>
-          <TouchableOpacity style={s.row} onPress={handleReferralShare}>
+          <TouchableOpacity style={s.row} onPress={handleShare}>
             <View style={{ flex: 1 }}>
               <Text style={s.rowLabel}>📤 Share Your Streak</Text>
-              <Text style={s.ctaDesc}>
-                {odinBetaUnlocked
-                  ? '✅ ODIN Beta Access Unlocked!'
-                  : `Share ${3 - referralShareCount} more times for ODIN beta access`}
-              </Text>
+              <Text style={s.ctaDesc}>Challenge your friends to conquer their mornings</Text>
             </View>
             <Text style={s.ctaArrow}>→</Text>
           </TouchableOpacity>
-          {referralCode ? (
-            <View style={s.row}>
-              <Text style={s.rowLabel}>Your Referral Code</Text>
-              <Text style={[s.rowValue, { color: COLORS.gold, fontWeight: '800', fontFamily: 'monospace' }]}>
-                {referralCode}
-              </Text>
-            </View>
-          ) : null}
-          <View style={s.row}>
-            <Text style={s.rowLabel}>Referral Shares</Text>
-            <Text style={s.rowValue}>{referralShareCount}</Text>
-          </View>
         </View>
 
         {/* About */}
@@ -263,59 +206,19 @@ export default function SettingsScreen() {
         <View style={s.card}>
           <View style={s.row}>
             <Text style={s.rowLabel}>Version</Text>
-            <Text style={s.rowValue}>1.2.0</Text>
+            <Text style={s.rowValue}>1.3.0</Text>
           </View>
           <View style={s.row}>
             <Text style={s.rowLabel}>Built by</Text>
-            <Text style={s.rowValue}>ODIN Labs</Text>
+            <Text style={s.rowValue}>Rise Labs</Text>
           </View>
-          <View style={s.row}>
-            <Text style={s.rowLabel}>Platform</Text>
-            <Text style={[s.rowValue, { color: COLORS.frost }]}>pdufa.bio</Text>
-          </View>
-        </View>
-
-        {/* ODIN Platform CTAs */}
-        <Text style={s.section}>ODIN PLATFORM</Text>
-        <View style={s.card}>
-          <TouchableOpacity
-            style={s.row}
-            onPress={() => Linking.openURL('https://pdufa.bio')}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={s.rowLabel}>👁️ Visit pdufa.bio</Text>
-              <Text style={s.ctaDesc}>FDA catalyst intelligence · 96% accuracy</Text>
-            </View>
-            <Text style={s.ctaArrow}>→</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={s.row}
-            onPress={() => Linking.openURL('https://pdufa.bio/#waitlist')}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={s.rowLabel}>📧 Join the Waitlist</Text>
-              <Text style={s.ctaDesc}>Early access to ODIN scoring alerts</Text>
-            </View>
-            <Text style={s.ctaArrow}>→</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={s.row}
-            onPress={() => Linking.openURL('https://pdufa.bio/mobile')}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={s.rowLabel}>📱 Download ODIN Mobile</Text>
-              <Text style={s.ctaDesc}>PDUFA dates + push alerts on the go</Text>
-            </View>
-            <Text style={s.ctaArrow}>→</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Branding */}
         <View style={s.branding}>
-          <Text style={s.brandEmoji}>👁️</Text>
-          <Text style={s.brandName}>RISE by ODIN</Text>
+          <Text style={s.brandEmoji}>⚔️</Text>
+          <Text style={s.brandName}>RISE</Text>
           <Text style={s.brandTag}>Conquer Your Morning</Text>
-          <Text style={s.brandSub}>Part of the ODIN Intelligence Platform</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -364,7 +267,6 @@ const s = StyleSheet.create({
   brandEmoji: { fontSize: 40, marginBottom: 8 },
   brandName: { color: COLORS.gold, fontSize: 20, fontWeight: '800', letterSpacing: 2 },
   brandTag: { color: COLORS.textSecondary, fontSize: 13, marginTop: 4, fontStyle: 'italic' },
-  brandSub: { color: COLORS.textMuted, fontSize: 11, marginTop: 8 },
   // Pro section header
   proSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20, marginBottom: 10 },
   // CTA styles

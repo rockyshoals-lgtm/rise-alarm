@@ -36,7 +36,7 @@ const TAB_ICONS: Record<string, string> = {
   Alarms: '⏰',
   Challenge: '⚔️',
   Arena: '🏟️',
-  Intel: '👁️',
+  Intel: '📊',
   Hero: '👤',
   Settings: '⚙️',
 };
@@ -106,13 +106,7 @@ export default function App() {
             }}
           />
           <Tab.Screen name="Arena" component={ArenaScreen} />
-          <Tab.Screen
-            name="Intel"
-            component={IntelScreen}
-            options={{
-              tabBarLabel: 'ODIN',
-            }}
-          />
+          <Tab.Screen name="Intel" component={IntelScreen} />
           <Tab.Screen name="Hero" component={HeroScreen} />
           <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>

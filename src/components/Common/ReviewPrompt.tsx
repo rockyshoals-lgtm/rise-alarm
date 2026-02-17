@@ -10,8 +10,8 @@ const MIN_WINS_TO_PROMPT = 3;
 // App Store / Play Store URLs (update with real IDs when published)
 const STORE_URL = Platform.select({
   ios: 'https://apps.apple.com/app/rise-rpg-alarm-clock/id0000000000',
-  android: 'https://play.google.com/store/apps/details?id=bio.pdufa.rise',
-  default: 'https://pdufa.bio',
+  android: 'https://play.google.com/store/apps/details?id=com.rise.rpgalarm',
+  default: 'https://rise-alarm.app',
 });
 
 interface ReviewPromptProps {

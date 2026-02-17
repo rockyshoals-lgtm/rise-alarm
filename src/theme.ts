@@ -1,4 +1,4 @@
-// RISE Theme — Norse-inspired dark palette tied to ODIN branding
+// RISE Theme — Norse-inspired dark palette
 export const COLORS = {
   bg: '#030718',
   bgCard: '#0a1128',
@@ -62,5 +62,5 @@ export const LEVEL_TITLES = [
   'Allfather\'s Chosen', // 16
   'Herald of Dawn', // 17
   'Realm Walker',   // 18
-  'Odin\'s Eye',    // 19
+  'All-Seer',       // 19
 ];

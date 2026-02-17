@@ -1,6 +1,6 @@
 /**
  * Pro Tier Store — manages Rise Pro subscription state.
- * Controls: ad visibility, coin multiplier, grace token rate, ODIN priority.
+ * Controls: ad visibility, coin multiplier, grace token rate, exclusive content.
  * Swap activatePro() to real IAP receipt validation later.
  */
 import { create } from 'zustand';

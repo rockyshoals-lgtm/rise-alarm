@@ -34,7 +34,6 @@ export default function BossWidget() {
         Loot: {weekBoss.loot.coins} coins + {weekBoss.loot.xp} XP · Weak to: {weekBoss.weakTo}
       </Text>
 
-      {/* PDUFA-themed lore */}
       <Text style={s.lore}>{weekBoss.lore}</Text>
     </View>
   );

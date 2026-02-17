@@ -6,7 +6,7 @@ export interface Boss {
   maxHp: number;
   attackPower: number; // damage to player per snooze
   description: string;
-  lore: string; // PDUFA/biotech-themed lore
+  lore: string; // Norse mythology lore
   weakTo: string; // challenge type that deals bonus damage
   loot: { coins: number; xp: number };
 }
@@ -20,7 +20,7 @@ export const WEEKLY_BOSSES: Boss[] = [
     maxHp: 500,
     attackPower: 15,
     description: 'An undead warrior who feeds on your desire to sleep in. Every snooze makes him stronger.',
-    lore: 'Like a Phase 1 trial, the Draugr tests your basic survival. Only the disciplined advance to the next stage. Track real FDA catalysts at pdufa.bio.',
+    lore: 'The Draugr guards ancient burial mounds, dragging sleepers into eternal rest. Only the disciplined escape his grasp and rise to face the dawn.',
     weakTo: 'shake',
     loot: { coins: 100, xp: 200 },
   },
@@ -32,7 +32,7 @@ export const WEEKLY_BOSSES: Boss[] = [
     maxHp: 750,
     attackPower: 20,
     description: 'A towering frost giant who freezes your willpower. Solve problems to shatter his ice armor.',
-    lore: 'Phase 2 — the frost giant of clinical development. Most drugs freeze here. ODIN calculates which survive. See the odds at pdufa.bio.',
+    lore: 'Born in the frozen realm of Niflheim, Hrímþurs encases warriors in ice to prevent them from rising. Sharp thinking shatters his frozen grip.',
     weakTo: 'math',
     loot: { coins: 150, xp: 300 },
   },
@@ -44,7 +44,7 @@ export const WEEKLY_BOSSES: Boss[] = [
     maxHp: 1000,
     attackPower: 25,
     description: 'The great wolf who swallows mornings whole. Only knowledge can bind him.',
-    lore: 'Fenrir devours portfolios like a Complete Response Letter. ODIN\'s scoring engine predicts CRL risk before the PDUFA date. Knowledge is your weapon.',
+    lore: 'Fenrir, the monstrous wolf of Norse legend, devours the sun each night. Only Gleipnir — a chain forged from knowledge and courage — can hold him back.',
     weakTo: 'trivia',
     loot: { coins: 200, xp: 400 },
   },
@@ -56,7 +56,7 @@ export const WEEKLY_BOSSES: Boss[] = [
     maxHp: 1200,
     attackPower: 30,
     description: 'The serpent that encircles the world, squeezing out your motivation to rise.',
-    lore: 'Phase 3 — the world serpent wraps around your conviction. Pivotal trial data can make or break everything. ODIN sees through the noise at pdufa.bio.',
+    lore: 'Jörmungandr coils around Midgard, tightening his grip as dawn approaches. Only those who remember the patterns of his scales can slip free.',
     weakTo: 'memory',
     loot: { coins: 250, xp: 500 },
   },
@@ -68,7 +68,7 @@ export const WEEKLY_BOSSES: Boss[] = [
     maxHp: 1500,
     attackPower: 35,
     description: 'The dragon that gnaws at the roots of the World Tree. Your worst enemy at dawn.',
-    lore: 'Advisory Committee votes — the dragon gnawing at your thesis. ODIN tracks AdCom sentiment and historical voting patterns. Prepare at pdufa.bio.',
+    lore: 'Níðhöggr gnaws at the roots of Yggdrasil, weakening the connection between sleep and wakefulness. Only the swift of hand and mind can outpace his destruction.',
     weakTo: 'typing',
     loot: { coins: 300, xp: 600 },
   },
@@ -80,7 +80,7 @@ export const WEEKLY_BOSSES: Boss[] = [
     maxHp: 2000,
     attackPower: 40,
     description: 'The fire giant who brings Ragnarök. Only the most disciplined warriors survive.',
-    lore: 'PDUFA day — the final boss. Approval or rejection. Surtr brings binary fire. ODIN\'s 96% accuracy engine is your shield. Arm yourself at pdufa.bio.',
+    lore: 'Surtr wields a sword brighter than the sun, threatening to burn the bridges between night and day. Rise before he sets the world ablaze — march into the dawn.',
     weakTo: 'steps',
     loot: { coins: 500, xp: 1000 },
   },
