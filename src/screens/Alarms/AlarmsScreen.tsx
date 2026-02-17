@@ -13,6 +13,7 @@ import {
 import { usePlayerStore } from '../../stores/playerStore';
 import XPBar from '../../components/Common/XPBar';
 import BossWidget from '../../components/Common/BossWidget';
+import AdBanner from '../../components/Common/AdBanner';
 
 const CHALLENGE_OPTIONS: { type: ChallengeType; label: string; emoji: string }[] = [
   { type: 'math', label: 'Rune Math', emoji: '⚡' },
@@ -183,6 +184,11 @@ export default function AlarmsScreen() {
         {/* Boss Widget */}
         <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
           <BossWidget />
+        </View>
+
+        {/* Ad Banner */}
+        <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+          <AdBanner />
         </View>
 
         {/* Alarms */}

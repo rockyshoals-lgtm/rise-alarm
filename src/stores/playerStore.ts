@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LEVEL_XP, LEVEL_TITLES } from '../theme';
 import { ACHIEVEMENTS, Achievement } from '../data/achievements';
 import { getBossForWeek, getWeekNumber, Boss } from '../data/bosses';
+import { useProStore } from './proStore';
 
 export interface PlayerStats {
   totalDismissals: number;
@@ -283,10 +284,11 @@ export const usePlayerStore = create<PlayerState>()(
         // XP & Coins
         const streakMultiplier = newStreak >= 7 ? 2.0 : newStreak >= 3 ? 1.5 : 1.0;
         const snoozePenalty = Math.max(0.5, 1 - snoozesUsed * 0.2);
+        const proMultiplier = useProStore.getState().getCoinMultiplier();
         const baseXP = 25;
         const baseCoin = 10;
         const xpEarned = Math.round(baseXP * streakMultiplier * snoozePenalty);
-        const coinsEarned = Math.round(baseCoin * streakMultiplier * snoozePenalty);
+        const coinsEarned = Math.round(baseCoin * streakMultiplier * snoozePenalty * proMultiplier);
 
         const newXP = state.xp + xpEarned;
         const newCoins = state.coins + coinsEarned;
@@ -446,8 +448,9 @@ export const usePlayerStore = create<PlayerState>()(
 
       practiceChallenge: (type, success) => {
         const state = get();
+        const proMultiplier = useProStore.getState().getCoinMultiplier();
         const xpGain = success ? 5 : 0;
-        const coinGain = success ? 2 : 0;
+        const coinGain = success ? Math.round(2 * proMultiplier) : 0;
         const newXP = state.xp + xpGain;
         const newCoins = state.coins + coinGain;
         const newLevel = getLevel(newXP);
@@ -494,9 +497,11 @@ export const usePlayerStore = create<PlayerState>()(
         if (!completed.includes(taskId)) {
           completed.push(taskId);
           // Award small XP/coins for routine completion
+          const proMult = useProStore.getState().getCoinMultiplier();
+          const routineCoins = Math.round(1 * proMult);
           const newXP = state.xp + 3;
-          const newCoins = state.coins + 1;
-          const newStats = { ...state.stats, routinesCompleted: state.stats.routinesCompleted + 1, totalCoinsEarned: state.stats.totalCoinsEarned + 1 };
+          const newCoins = state.coins + routineCoins;
+          const newStats = { ...state.stats, routinesCompleted: state.stats.routinesCompleted + 1, totalCoinsEarned: state.stats.totalCoinsEarned + routineCoins };
 
           // Update today's sleep log entry with routine count
           const newLog = [...state.sleepLog];

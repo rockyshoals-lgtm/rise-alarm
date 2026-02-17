@@ -12,6 +12,7 @@ import MemoryMatch from '../../components/challenges/MemoryMatch';
 import TypingChallenge from '../../components/challenges/TypingChallenge';
 import StepsChallenge from '../../components/challenges/StepsChallenge';
 import type { ChallengeType } from '../../stores/alarmStore';
+import AdBanner from '../../components/Common/AdBanner';
 
 type Mode = 'menu' | 'practice';
 
@@ -96,6 +97,9 @@ export default function ArenaScreen() {
             <Text style={s.combatLabel}>Bosses Slain</Text>
           </View>
         </View>
+
+        {/* Ad Banner */}
+        <AdBanner />
 
         {/* Adaptive Difficulty Badge */}
         <View style={s.diffBadge}>

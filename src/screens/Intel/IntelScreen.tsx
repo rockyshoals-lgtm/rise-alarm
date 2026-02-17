@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../theme';
 import { usePlayerStore } from '../../stores/playerStore';
 import { getBossForWeek, getWeekNumber } from '../../data/bosses';
+import AdBanner from '../../components/Common/AdBanner';
 
 // Simulated upcoming PDUFA dates — teasers to drive users to pdufa.bio
 const UPCOMING_CATALYSTS = [
@@ -70,6 +71,9 @@ export default function IntelScreen() {
           <Text style={s.factIcon}>⚡</Text>
           <Text style={s.factText}>{ODIN_FACTS[factIndex]}</Text>
         </View>
+
+        {/* Ad Banner */}
+        <AdBanner />
 
         {/* === CTA #1: Visit pdufa.bio === */}
         <TouchableOpacity style={s.ctaCard} onPress={openPdufa} activeOpacity={0.8}>

@@ -4,6 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../theme';
 import { usePlayerStore } from '../../stores/playerStore';
 import { useBiotechStore } from '../../stores/biotechStore';
+import { useProStore } from '../../stores/proStore';
+import ProBadge from '../../components/Common/ProBadge';
+import ProUpsellCard from '../../components/Common/ProUpsellCard';
 
 export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
@@ -24,6 +27,9 @@ export default function SettingsScreen() {
     biotechTriviaCorrect, biotechHintsUnlocked,
     generateReferralCode, recordReferralShare,
   } = useBiotechStore();
+
+  const { isPro, isProActive, proStartDate, proExpiryDate, purchaseSource, deactivatePro } = useProStore();
+  const proActive = isProActive();
 
   const wakeScore = getWakeScore();
 
@@ -176,6 +182,54 @@ export default function SettingsScreen() {
           )}
         </View>
 
+        {/* === RISE PRO === */}
+        <View style={s.proSectionHeader}>
+          <Text style={s.section}>RISE PRO</Text>
+          <ProBadge />
+        </View>
+        {proActive ? (
+          <View style={s.card}>
+            <View style={s.row}>
+              <Text style={s.rowLabel}>Status</Text>
+              <Text style={[s.rowValue, { color: COLORS.gold, fontWeight: '700' }]}>Active</Text>
+            </View>
+            <View style={s.row}>
+              <Text style={s.rowLabel}>Plan</Text>
+              <Text style={s.rowValue}>
+                {purchaseSource === 'lifetime' ? 'Lifetime' : 'Monthly Subscription'}
+              </Text>
+            </View>
+            {proStartDate && (
+              <View style={s.row}>
+                <Text style={s.rowLabel}>Member Since</Text>
+                <Text style={s.rowValue}>{proStartDate}</Text>
+              </View>
+            )}
+            {proExpiryDate && purchaseSource === 'subscription' && (
+              <View style={s.row}>
+                <Text style={s.rowLabel}>Renews</Text>
+                <Text style={s.rowValue}>{proExpiryDate}</Text>
+              </View>
+            )}
+            <TouchableOpacity
+              style={s.row}
+              onPress={() => Alert.alert(
+                'Manage Subscription',
+                'In-app purchase management coming soon. For now you can deactivate Pro locally.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Deactivate', style: 'destructive', onPress: deactivatePro },
+                ]
+              )}
+            >
+              <Text style={s.rowLabel}>Manage Subscription</Text>
+              <Text style={s.ctaArrow}>→</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ProUpsellCard />
+        )}
+
         {/* === REFERRAL / SHARE === */}
         <Text style={s.section}>SHARE & EARN</Text>
         <View style={s.card}>
@@ -311,6 +365,8 @@ const s = StyleSheet.create({
   brandName: { color: COLORS.gold, fontSize: 20, fontWeight: '800', letterSpacing: 2 },
   brandTag: { color: COLORS.textSecondary, fontSize: 13, marginTop: 4, fontStyle: 'italic' },
   brandSub: { color: COLORS.textMuted, fontSize: 11, marginTop: 8 },
+  // Pro section header
+  proSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20, marginBottom: 10 },
   // CTA styles
   ctaDesc: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
   ctaArrow: { color: COLORS.frost, fontSize: 20, fontWeight: '700' },

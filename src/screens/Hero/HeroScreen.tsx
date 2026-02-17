@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, LEVEL_TITLES } from '../../theme';
 import { usePlayerStore, getXPProgress, getXPForNextLevel } from '../../stores/playerStore';
 import { ACHIEVEMENTS } from '../../data/achievements';
+import AdBanner from '../../components/Common/AdBanner';
 
 export default function HeroScreen() {
   const {
@@ -113,6 +114,9 @@ export default function HeroScreen() {
             </View>
           </View>
         </View>
+
+        {/* Ad Banner */}
+        <AdBanner />
 
         {/* === ADAPTIVE DIFFICULTY === */}
         <Text style={s.sectionTitle}>ADAPTIVE DIFFICULTY</Text>
