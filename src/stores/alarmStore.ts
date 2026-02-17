@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type ChallengeType = 'math' | 'trivia' | 'shake' | 'memory' | 'typing' | 'steps';
+export type ChallengeType = 'math' | 'trivia' | 'shake' | 'memory' | 'typing' | 'steps' | 'social';
+export type BriefingPersona = 'drill_sergeant' | 'wise_elder' | 'cheerful_coach';
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'viking';
 
 export interface Alarm {
@@ -23,6 +24,12 @@ export interface Alarm {
   wakeProofDelayMin: number; // minutes after dismissal to re-check (default 5)
   // Morning Routine
   morningRoutine: string[]; // list of routine task ids
+  // Smart Wake — detect light sleep to wake gently
+  smartWakeEnabled: boolean;
+  smartWakeWindowMin: number; // minutes before target to start detection (default 30)
+  // Morning Briefing — TTS personalized wake-up message
+  morningBriefingEnabled: boolean;
+  briefingPersona: BriefingPersona;
 }
 
 // Wake Proof state
@@ -35,6 +42,9 @@ interface AlarmState {
   wakeProofStatus: WakeProofStatus;
   wakeProofDeadline: number | null; // timestamp when wake proof check fires
   wakeProofAlarmId: string | null;
+  // Sleep Mode
+  sleepModeActive: boolean;
+  sleepModeAlarmId: string | null;
 
   addAlarm: (alarm: Omit<Alarm, 'id'>) => string;
   updateAlarm: (id: string, updates: Partial<Alarm>) => void;
@@ -48,6 +58,9 @@ interface AlarmState {
   passWakeProof: () => void;
   failWakeProof: () => void;
   resetWakeProof: () => void;
+  // Sleep Mode actions
+  startSleepMode: (alarmId: string) => void;
+  stopSleepMode: () => void;
 }
 
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -60,6 +73,8 @@ export const useAlarmStore = create<AlarmState>()(
       wakeProofStatus: 'idle' as WakeProofStatus,
       wakeProofDeadline: null,
       wakeProofAlarmId: null,
+      sleepModeActive: false,
+      sleepModeAlarmId: null,
 
       addAlarm: (alarm) => {
         const id = generateId();
@@ -129,6 +144,15 @@ export const useAlarmStore = create<AlarmState>()(
           wakeProofAlarmId: null,
         });
       },
+
+      // Sleep Mode
+      startSleepMode: (alarmId) => {
+        set({ sleepModeActive: true, sleepModeAlarmId: alarmId });
+      },
+
+      stopSleepMode: () => {
+        set({ sleepModeActive: false, sleepModeAlarmId: null });
+      },
     }),
     {
       name: 'rise-alarms',
@@ -154,6 +178,10 @@ export function createDefaultAlarm(hour: number = 7, minute: number = 0): Omit<A
     wakeProofEnabled: true,
     wakeProofDelayMin: 5,
     morningRoutine: ['water', 'stretch'],
+    smartWakeEnabled: false,
+    smartWakeWindowMin: 30,
+    morningBriefingEnabled: true,
+    briefingPersona: 'cheerful_coach',
   };
 }
 

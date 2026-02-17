@@ -8,7 +8,7 @@ import { COLORS } from '../../theme';
 import {
   useAlarmStore, formatTime, DAY_LABELS, createDefaultAlarm,
   ROUTINE_TASKS,
-  type Alarm, type ChallengeType, type Difficulty
+  type Alarm, type ChallengeType, type Difficulty, type BriefingPersona
 } from '../../stores/alarmStore';
 import { usePlayerStore } from '../../stores/playerStore';
 import XPBar from '../../components/Common/XPBar';
@@ -22,13 +22,20 @@ const CHALLENGE_OPTIONS: { type: ChallengeType; label: string; emoji: string }[]
   { type: 'memory', label: 'Memory Runes', emoji: '🧠' },
   { type: 'typing', label: 'Scribe Trial', emoji: '✍️' },
   { type: 'steps', label: 'March of Dawn', emoji: '🏃' },
+  { type: 'social', label: 'Friend\'s Voice', emoji: '👥' },
 ];
 
 const DIFFICULTY_OPTIONS: Difficulty[] = ['easy', 'medium', 'hard', 'viking'];
 const WAKE_PROOF_DELAYS = [3, 5, 10, 15]; // minutes
+const SMART_WAKE_WINDOWS = [15, 20, 30, 45]; // minutes
+const PERSONA_OPTIONS: { id: BriefingPersona; label: string; emoji: string }[] = [
+  { id: 'drill_sergeant', label: 'Drill Sergeant', emoji: '🎖️' },
+  { id: 'wise_elder', label: 'Wise Elder', emoji: '🧙' },
+  { id: 'cheerful_coach', label: 'Cheerful Coach', emoji: '🏋️' },
+];
 
 export default function AlarmsScreen() {
-  const { alarms, addAlarm, updateAlarm, deleteAlarm, toggleAlarm, setActiveAlarm } = useAlarmStore();
+  const { alarms, addAlarm, updateAlarm, deleteAlarm, toggleAlarm, setActiveAlarm, startSleepMode } = useAlarmStore();
   const { currentStreak, coins, recommendedDifficulty } = usePlayerStore();
   const [editModal, setEditModal] = useState(false);
   const [editAlarm, setEditAlarm] = useState<Alarm | null>(null);
@@ -44,6 +51,11 @@ export default function AlarmsScreen() {
   const [wakeProofEnabled, setWakeProofEnabled] = useState(true);
   const [wakeProofDelay, setWakeProofDelay] = useState(5);
   const [morningRoutine, setMorningRoutine] = useState<string[]>(['water', 'stretch']);
+  // Smart Wake + Briefing fields
+  const [smartWakeEnabled, setSmartWakeEnabled] = useState(false);
+  const [smartWakeWindowMin, setSmartWakeWindowMin] = useState(30);
+  const [morningBriefingEnabled, setMorningBriefingEnabled] = useState(true);
+  const [briefingPersona, setBriefingPersona] = useState<BriefingPersona>('cheerful_coach');
 
   const openNewAlarm = () => {
     setEditAlarm(null);
@@ -58,6 +70,10 @@ export default function AlarmsScreen() {
     setWakeProofEnabled(true);
     setWakeProofDelay(5);
     setMorningRoutine(['water', 'stretch']);
+    setSmartWakeEnabled(false);
+    setSmartWakeWindowMin(30);
+    setMorningBriefingEnabled(true);
+    setBriefingPersona('cheerful_coach');
     setEditModal(true);
   };
 
@@ -74,6 +90,10 @@ export default function AlarmsScreen() {
     setWakeProofEnabled(alarm.wakeProofEnabled ?? true);
     setWakeProofDelay(alarm.wakeProofDelayMin ?? 5);
     setMorningRoutine([...(alarm.morningRoutine || ['water', 'stretch'])]);
+    setSmartWakeEnabled(alarm.smartWakeEnabled ?? false);
+    setSmartWakeWindowMin(alarm.smartWakeWindowMin ?? 30);
+    setMorningBriefingEnabled(alarm.morningBriefingEnabled ?? true);
+    setBriefingPersona(alarm.briefingPersona ?? 'cheerful_coach');
     setEditModal(true);
   };
 
@@ -85,6 +105,10 @@ export default function AlarmsScreen() {
       wakeProofEnabled,
       wakeProofDelayMin: wakeProofDelay,
       morningRoutine,
+      smartWakeEnabled,
+      smartWakeWindowMin,
+      morningBriefingEnabled,
+      briefingPersona,
     };
     if (editAlarm) {
       updateAlarm(editAlarm.id, data);
@@ -138,6 +162,12 @@ export default function AlarmsScreen() {
             {item.wakeProofEnabled && (
               <Text style={[s.tag, { borderColor: COLORS.frost + '40' }]}>🛡️ Wake Proof</Text>
             )}
+            {item.smartWakeEnabled && (
+              <Text style={[s.tag, { borderColor: COLORS.purple + '40' }]}>😴 Smart Wake {item.smartWakeWindowMin}m</Text>
+            )}
+            {item.morningBriefingEnabled && (
+              <Text style={[s.tag, { borderColor: COLORS.emerald + '40' }]}>🗣️ Briefing</Text>
+            )}
           </View>
         </View>
         <View style={s.alarmRight}>
@@ -150,6 +180,11 @@ export default function AlarmsScreen() {
           <TouchableOpacity style={s.testBtn} onPress={() => testAlarm(item)}>
             <Text style={s.testText}>TEST</Text>
           </TouchableOpacity>
+          {item.smartWakeEnabled && (
+            <TouchableOpacity style={s.sleepBtn} onPress={() => startSleepMode(item.id)}>
+              <Text style={s.sleepText}>😴 SLEEP</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -371,6 +406,67 @@ export default function AlarmsScreen() {
                 ))}
               </View>
 
+              {/* === SMART WAKE === */}
+              <Text style={s.fieldLabel}>😴 Smart-Wake Window</Text>
+              <View style={s.wakeProofToggle}>
+                <Text style={s.wakeProofText}>
+                  {smartWakeEnabled ? `Detect light sleep ${smartWakeWindowMin}m before alarm` : 'Disabled'}
+                </Text>
+                <Switch
+                  value={smartWakeEnabled}
+                  onValueChange={setSmartWakeEnabled}
+                  trackColor={{ false: COLORS.bgCardLight, true: COLORS.purple + '50' }}
+                  thumbColor={smartWakeEnabled ? COLORS.purple : COLORS.textMuted}
+                />
+              </View>
+              {smartWakeEnabled && (
+                <>
+                  <Text style={s.subLabel}>Wake window (minutes before alarm):</Text>
+                  <View style={s.daysRow}>
+                    {SMART_WAKE_WINDOWS.map((w) => (
+                      <TouchableOpacity
+                        key={w}
+                        style={[s.dayBtn, smartWakeWindowMin === w && { backgroundColor: COLORS.purple, borderColor: COLORS.purple }]}
+                        onPress={() => setSmartWakeWindowMin(w)}
+                      >
+                        <Text style={[s.dayText, smartWakeWindowMin === w && s.dayTextActive]}>{w}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {/* === MORNING BRIEFING === */}
+              <Text style={s.fieldLabel}>🗣️ Morning Briefing (AI Voice)</Text>
+              <View style={s.wakeProofToggle}>
+                <Text style={s.wakeProofText}>
+                  {morningBriefingEnabled ? 'Personalized TTS after victory' : 'Disabled'}
+                </Text>
+                <Switch
+                  value={morningBriefingEnabled}
+                  onValueChange={setMorningBriefingEnabled}
+                  trackColor={{ false: COLORS.bgCardLight, true: COLORS.emerald + '50' }}
+                  thumbColor={morningBriefingEnabled ? COLORS.emerald : COLORS.textMuted}
+                />
+              </View>
+              {morningBriefingEnabled && (
+                <>
+                  <Text style={s.subLabel}>Voice Persona:</Text>
+                  <View style={s.challengeRow}>
+                    {PERSONA_OPTIONS.map((p) => (
+                      <TouchableOpacity
+                        key={p.id}
+                        style={[s.challengeBtn, briefingPersona === p.id && { borderColor: COLORS.emerald, backgroundColor: COLORS.emerald + '20' }]}
+                        onPress={() => setBriefingPersona(p.id)}
+                      >
+                        <Text style={s.challengeEmoji}>{p.emoji}</Text>
+                        <Text style={[s.challengeLabel, briefingPersona === p.id && { color: COLORS.text }]}>{p.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+
               {/* Actions */}
               <View style={s.modalActions}>
                 {editAlarm && (
@@ -441,6 +537,8 @@ const s = StyleSheet.create({
   tag: { color: COLORS.textMuted, fontSize: 10, backgroundColor: COLORS.bgCardLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   testBtn: { borderWidth: 1, borderColor: COLORS.frost, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
   testText: { color: COLORS.frost, fontSize: 10, fontWeight: '700' },
+  sleepBtn: { borderWidth: 1, borderColor: COLORS.purple, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+  sleepText: { color: COLORS.purple, fontSize: 10, fontWeight: '700' },
   // Empty
   empty: { alignItems: 'center', paddingVertical: 40 },
   emptyEmoji: { fontSize: 48, marginBottom: 12 },

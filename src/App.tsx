@@ -15,6 +15,7 @@ import IntelScreen from './screens/Intel/IntelScreen';
 import HeroScreen from './screens/Hero/HeroScreen';
 import SettingsScreen from './screens/Settings/SettingsScreen';
 import OnboardingScreen, { hasCompletedOnboarding } from './screens/Onboarding/OnboardingScreen';
+import SleepModeScreen from './screens/SleepMode/SleepModeScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -42,7 +43,7 @@ const TAB_ICONS: Record<string, string> = {
 };
 
 export default function App() {
-  const { activeAlarmId } = useAlarmStore();
+  const { activeAlarmId, sleepModeActive } = useAlarmStore();
   const { resetBossIfNewWeek } = usePlayerStore();
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
 
@@ -67,6 +68,16 @@ export default function App() {
       <SafeAreaProvider>
         <StatusBar style="light" />
         <OnboardingScreen onComplete={() => setShowOnboarding(false)} />
+      </SafeAreaProvider>
+    );
+  }
+
+  // Sleep Mode overlay — takes over full screen while monitoring
+  if (sleepModeActive) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <SleepModeScreen />
       </SafeAreaProvider>
     );
   }
